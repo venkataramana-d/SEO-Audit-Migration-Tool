@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Technical Audit — SEO Migration Toolkit</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.55}
+  .wrap{max-width:920px;margin:0 auto;padding:26px 20px 80px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .back{font-size:13px;color:var(--brand);text-decoration:none;font-weight:600}
+  .back:hover{text-decoration:underline}
+  h1{font-size:20px;margin:12px 0 4px;word-break:break-all}
+  h1 a{color:var(--ink);text-decoration:none} h1 a:hover{color:var(--brand)}
+  .subrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:20px}
+  .pill{font-size:12px;font-weight:700;padding:4px 11px;border-radius:20px}
+  .st-ok{background:rgba(31,157,107,.14);color:var(--green)}
+  .st-warn{background:rgba(199,119,0,.14);color:var(--amber)}
+  .st-err{background:rgba(214,69,80,.14);color:var(--red)}
+  .v-clear{background:rgba(31,157,107,.14);color:var(--green)}
+  .v-issues{background:rgba(214,69,80,.14);color:var(--red)}
+  .v-top{background:linear-gradient(135deg,#f6c745,#e0a010);color:#3a2c00}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card h2{font-size:13px;margin:0 0 14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .gsc{background:linear-gradient(135deg,rgba(246,199,69,.14),rgba(246,199,69,.05));border-color:rgba(224,160,16,.4)}
+  .gsc .row{display:flex;flex-wrap:wrap;gap:8px 26px;font-size:14px}
+  .gsc b{color:#b8860b}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.k{color:var(--muted);font-weight:600;width:190px}
+  td.v{word-break:break-word}
+  .good{color:var(--green);font-weight:700} .bad{color:var(--red);font-weight:700}
+  .ccount{font-weight:700;font-variant-numeric:tabular-nums}
+  .ccount.ok{color:var(--green)} .ccount.warn{color:var(--amber)}
+  .metabox{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .metabox:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .metalabel{font-size:12px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:10px}
+  .metaval{font-size:13.5px;margin-top:3px;word-break:break-word}
+  .rangehint{font-size:11px;color:var(--grey)}
+  .issue{border-left:3px solid var(--line);padding:12px 0 12px 14px;margin-bottom:14px}
+  .issue.Critical{border-color:var(--red)} .issue.High{border-color:var(--amber)}
+  .issue.Medium{border-color:var(--brand)} .issue.Low{border-color:var(--grey)}
+  .ihead{display:flex;align-items:center;gap:9px;margin-bottom:5px;flex-wrap:wrap}
+  .sevchip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;text-transform:uppercase}
+  .sevchip.Critical{background:var(--red);color:#fff} .sevchip.High{background:var(--amber);color:#241800}
+  .sevchip.Medium{background:var(--brand);color:#fff} .sevchip.Low{background:var(--grey);color:#fff}
+  .icheck{font-weight:700;font-size:14px}
+  .idetail{font-size:13.5px;margin:2px 0}
+  .imeta{font-size:12.5px;margin:3px 0}
+  .imeta .lab{font-weight:700} .imeta.fix .lab{color:var(--green)} .imeta.why .lab{color:var(--brand)}
+  .imeta.loc{color:var(--grey);font-family:ui-monospace,monospace;font-size:11.5px}
+  .clearmsg{color:var(--green);font-weight:700}
+  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;
+    border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:var(--card2);color:var(--muted)}
+  .perfgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:14px}
+  .metric{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+  .metric b{display:block;font-size:19px}.metric small{color:var(--muted);font-size:11px}
+  .score{font-size:34px;font-weight:800}
+  .toggle{display:inline-flex;gap:6px;margin-left:auto}
+  .toggle button{font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+  .toggle button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink" href="/checklist">Migration Checklist</a>
+    <a class="navlink" href="/settings">Settings</a>
+  </nav>
+
+{% if not_found %}
+  <a class="back" href="/">← Back to Site Audit</a>
+  <div class="card" style="margin-top:16px">
+    <h2>Result not available</h2>
+    <p>This page's audit data is no longer in memory (the server may have restarted).
+       Please re-run the audit from the <a href="/">Site Audit</a> tab, then click the URL again.</p>
+    <p style="color:var(--muted);font-size:13px;word-break:break-all">{{ url }}</p>
+  </div>
+{% else %}
+  <a class="back" href="/" onclick="if(history.length>1){history.back();return false;}">← Back to crawled URLs</a>
+  <h1><a href="{{ page.url }}" target="_blank" rel="noopener">{{ page.url }}</a></h1>
+  <div class="subrow">
+    {% set s = page.status %}
+    <span class="pill {{ 'st-ok' if s>=200 and s<300 else ('st-warn' if s>=300 and s<400 else 'st-err') }}">HTTP {{ s }}</span>
+    {% if issues %}<span class="pill v-issues">{{ issues|length }} issue{{ 's' if issues|length>1 else '' }}</span>
+    {% else %}<span class="pill v-clear">CLEAR</span>{% endif %}
+    {% if canon_status=='ok' %}<span class="pill st-ok">Canonical ✓ matches</span>
+    {% elif canon_status=='mismatch' %}<span class="pill st-warn">Canonical ≠ points elsewhere</span>
+    {% else %}<span class="pill st-err">Canonical ✗ missing</span>{% endif %}
+    {% if gsc %}<span class="pill v-top">★ TOP #{{ gsc.rank }} · {{ gsc.clicks }} clicks</span>{% endif %}
+  </div>
+
+  {% if gsc %}
+  <div class="card gsc">
+    <h2>⚠ Priority page — protect through migration</h2>
+    <div class="row">
+      <span>Clicks: <b>{{ gsc.clicks }}</b></span>
+      <span>Impressions: <b>{{ gsc.impressions }}</b></span>
+      <span>CTR: <b>{{ gsc.ctr }}%</b></span>
+      <span>Avg position: <b>{{ gsc.position }}</b></span>
+      <span>Traffic rank: <b>#{{ gsc.rank }}</b></span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Issues ({{ issues|length }})</h2>
+    {% if not issues %}
+      <div class="clearmsg">✓ No SEO issues found — this page is clear.</div>
+    {% else %}
+      {% for i in issues %}
+      <div class="issue {{ i.severity }}">
+        <div class="ihead"><span class="sevchip {{ i.severity }}">{{ i.severity }}</span><span class="icheck">{{ i.check }}</span></div>
+        <div class="idetail">{{ i.detail }}</div>
+        <div class="imeta loc"><span class="lab">Location:</span> {{ i.location }}</div>
+        <div class="imeta fix"><span class="lab">How to fix:</span> {{ i.how_to_fix }}</div>
+        <div class="imeta why"><span class="lab">Why it matters:</span> {{ i.why }}</div>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Meta tags &amp; character counts</h2>
+    {% set tlen = page.title_len %}
+    <div class="metabox">
+      <div class="metalabel"><span>Title tag</span>
+        <span class="ccount {{ 'ok' if tlen>=30 and tlen<=60 else 'warn' }}">{{ tlen }} chars <span class="rangehint">(ideal 30–60)</span></span></div>
+      <div class="metaval">{{ page.title or '— missing —' }}</div>
+    </div>
+    {% set dlen = page.meta_desc_len %}
+    <div class="metabox">
+      <div class="metalabel"><span>Meta description</span>
+        <span class="ccount {{ 'ok' if dlen>=70 and dlen<=160 else 'warn' }}">{{ dlen }} chars <span class="rangehint">(ideal 70–160)</span></span></div>
+      <div class="metaval">{{ page.meta_desc or '— missing —' }}</div>
+    </div>
+    <div class="metabox">
+      <div class="metalabel"><span>Canonical tag</span>
+        {% if canon_status=='ok' %}<span class="good">✓ matches this URL</span>
+        {% elif canon_status=='mismatch' %}<span class="bad">≠ points to another URL (issue)</span>
+        {% else %}<span class="bad">✗ missing (issue)</span>{% endif %}</div>
+      <div class="metaval">{{ page.canonical or '— none —' }}{% if page.canonical_count>1 %} <span class="bad">({{ page.canonical_count }} canonical tags!)</span>{% endif %}</div>
+    </div>
+    <div class="metabox">
+      <div class="metalabel"><span>Meta robots</span></div>
+      <div class="metaval">{{ page.meta_robots or 'index, follow (default)' }}</div>
+    </div>
+    <div class="metabox">
+      <div class="metalabel"><span>H1 heading{{ 's' if page.h1_count!=1 else '' }} ({{ page.h1_count }})</span></div>
+      <div class="metaval">{{ page.h1|join(' | ') or '— missing —' }}</div>
+    </div>
+    <div class="metabox">
+      <div class="metalabel"><span>Structured data (schema)</span>
+        {% if page.ld_types %}<span class="good">✓ present</span>{% else %}<span class="bad">✗ none</span>{% endif %}</div>
+      <div class="metaval">{{ page.ld_types|join(', ') or 'No JSON-LD schema found — add Course / Organization / BreadcrumbList / FAQ where relevant.' }}</div>
+    </div>
+    <div class="metabox">
+      <div class="metalabel"><span>Social &amp; other meta</span></div>
+      <div class="metaval">
+        Open Graph title: <b class="{{ 'good' if page.og_present else 'bad' }}">{{ 'yes' if page.og_present else 'no' }}</b> ·
+        OG image: <b class="{{ 'good' if page.og_image else 'bad' }}">{{ 'yes' if page.og_image else 'no' }}</b> ·
+        Twitter card: <b class="{{ 'good' if page.twitter_card else 'bad' }}">{{ 'yes' if page.twitter_card else 'no' }}</b> ·
+        Viewport: <b class="{{ 'good' if page.has_viewport else 'bad' }}">{{ 'yes' if page.has_viewport else 'no' }}</b> ·
+        hreflang: <b class="{{ 'good' if page.hreflang_count else 'bad' }}">{{ page.hreflang_count }}</b> ·
+        lang: <b>{{ page.html_lang or '—' }}</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Technical details</h2>
+    <table>
+      <tr><td class="k">Final URL</td><td class="v">{{ page.final_url }}{% if page.redirected %} <span class="bad">(redirected)</span>{% endif %}</td></tr>
+      <tr><td class="k">HTTPS</td><td class="v">{% if page.is_https %}<span class="good">Yes</span>{% else %}<span class="bad">No</span>{% endif %}{% if page.mixed_content %} · <span class="bad">{{ page.mixed_content }} mixed-content resource(s)</span>{% endif %}</td></tr>
+      <tr><td class="k">Title</td><td class="v">{{ page.title or '—' }} <span style="color:var(--muted)">({{ page.title_len }} chars{% if page.title_count>1 %}, {{ page.title_count }} tags!{% endif %})</span></td></tr>
+      <tr><td class="k">Meta description</td><td class="v">{{ page.meta_desc or '—' }} <span style="color:var(--muted)">({{ page.meta_desc_len }} chars)</span></td></tr>
+      <tr><td class="k">Meta robots</td><td class="v">{{ page.meta_robots or '(default index,follow)' }}</td></tr>
+      <tr><td class="k">Canonical</td><td class="v">{{ page.canonical or '—' }}{% if page.canonical_count>1 %} <span class="bad">({{ page.canonical_count }} tags!)</span>{% endif %}</td></tr>
+      <tr><td class="k">H1{{ 's' if page.h1_count!=1 else '' }} ({{ page.h1_count }})</td><td class="v">{{ page.h1|join(' | ') or '—' }}</td></tr>
+      <tr><td class="k">Headings order</td><td class="v">{{ page.heading_seq|join(', ') or '—' }}</td></tr>
+      <tr><td class="k">Word count</td><td class="v">{{ page.word_count }}</td></tr>
+      <tr><td class="k">Images</td><td class="v">{{ page.img_count }} total · <span class="{{ 'bad' if page.img_missing_alt else 'good' }}">{{ page.img_missing_alt }} missing ALT</span></td></tr>
+      <tr><td class="k">Structured data</td><td class="v">{{ page.ld_types|join(', ') or '—' }}</td></tr>
+      <tr><td class="k">hreflang tags</td><td class="v">{{ page.hreflang_count }}</td></tr>
+      <tr><td class="k">Open Graph / Twitter</td><td class="v">OG: {{ 'yes' if page.og_present else 'no' }}, image: {{ 'yes' if page.og_image else 'no' }} · Twitter card: {{ 'yes' if page.twitter_card else 'no' }}</td></tr>
+      <tr><td class="k">html lang</td><td class="v">{{ page.html_lang or '—' }}</td></tr>
+      <tr><td class="k">Viewport (mobile)</td><td class="v">{% if page.has_viewport %}<span class="good">Yes</span>{% else %}<span class="bad">No</span>{% endif %}</td></tr>
+      <tr><td class="k">Links</td><td class="v">{{ page.internal_links|length }} internal · {{ page.external_links|length }} external</td></tr>
+      <tr><td class="k">Response time</td><td class="v">{{ page.response_ms }} ms</td></tr>
+      <tr><td class="k">Page size</td><td class="v">{{ page.size_kb }} KB</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Link analysis</h2>
+    {% set ls = page.link_summary or {} %}
+    <table>
+      <tr><td class="k">Total links</td><td class="v">{{ ls.total or 0 }}</td></tr>
+      <tr><td class="k">Internal</td><td class="v">{{ ls.internal or 0 }}</td></tr>
+      <tr><td class="k">External</td><td class="v">{{ ls.external or 0 }}</td></tr>
+      <tr><td class="k">Internal nofollow</td><td class="v {{ 'bad' if ls.internal_nofollow else 'good' }}">{{ ls.internal_nofollow or 0 }}{% if ls.internal_nofollow %} — internal links should be dofollow{% endif %}</td></tr>
+      <tr><td class="k">External dofollow</td><td class="v {{ 'bad' if ls.external_dofollow else 'good' }}">{{ ls.external_dofollow or 0 }}{% if ls.external_dofollow %} — consider rel=nofollow on outbound links{% endif %}</td></tr>
+      <tr><td class="k">New-tab, no noopener</td><td class="v {{ 'bad' if ls.blank_unsafe else 'good' }}">{{ ls.blank_unsafe or 0 }}{% if ls.blank_unsafe %} — add rel=noopener{% endif %}</td></tr>
+      <tr><td class="k">Broken links</td><td class="v {{ 'bad' if page.broken_links else 'good' }}">{{ page.broken_links or 0 }}</td></tr>
+    </table>
+    {% set flagged = [] %}
+    {% for l in page.links or [] %}
+      {% if (l.status and (l.status==0 or l.status>=400)) or (l.internal and l.nofollow) or (l.target_blank and not l.noopener) %}
+        {% if flagged|length < 25 %}{% set _ = flagged.append(l) %}{% endif %}
+      {% endif %}
+    {% endfor %}
+    {% if flagged %}
+    <div style="margin-top:14px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">Flagged links (first {{ flagged|length }})</div>
+      <table>
+        <tr><td class="k" style="width:70px">Type</td><td class="k">Link</td></tr>
+        {% for l in flagged %}
+        <tr>
+          <td class="v">
+            {% if l.status and (l.status==0 or l.status>=400) %}<span class="bad">Broken {{ l.status }}</span>
+            {% elif l.internal and l.nofollow %}<span class="bad">int nofollow</span>
+            {% else %}<span class="bad">unsafe _blank</span>{% endif %}
+          </td>
+          <td class="v" style="font-size:12px">{{ l.href }}{% if l.anchor %} <span style="color:var(--muted)">— {{ l.anchor }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% else %}
+    <div class="good" style="margin-top:10px">✓ No broken, nofollow-internal, or unsafe new-tab links found.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0">Performance (PageSpeed Insights)</h2>
+      <div class="toggle">
+        <button id="mMobile" class="on" data-s="mobile">Mobile</button>
+        <button id="mDesktop" data-s="desktop">Desktop</button>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:10px 0 0">
+      Live test via Google — takes ~10-30s.{% if not has_perf_key %} No API key set (works at low volume; add one in <a href="/settings">Settings</a> for reliability).{% endif %}
+    </p>
+    <button class="btn" id="runPerf" style="margin-top:14px">Run performance test</button>
+    <div id="perfOut" style="margin-top:16px"></div>
+  </div>
+{% endif %}
+</div>
+
+{% if not not_found %}
+<script>
+  const PURL = {{ page.url|tojson }};
+  let strategy = "mobile";
+  const $ = id => document.getElementById(id);
+  $("mMobile").onclick = () => setStrat("mobile");
+  $("mDesktop").onclick = () => setStrat("desktop");
+  function setStrat(s){ strategy=s;
+    $("mMobile").classList.toggle("on", s==="mobile");
+    $("mDesktop").classList.toggle("on", s==="desktop"); }
+
+  $("runPerf").onclick = async () => {
+    $("runPerf").disabled = true; $("runPerf").textContent = "Testing… (~20s)";
+    $("perfOut").innerHTML = "";
+    try{
+      const r = await fetch("/api/perf?strategy="+strategy+"&url="+encodeURIComponent(PURL));
+      const d = await r.json();
+      if(d.error){ $("perfOut").innerHTML = '<div class="bad">'+d.error+'</div>'; }
+      else{
+        const sc = d.performance_score;
+        const col = sc>=90?'var(--green)':(sc>=50?'var(--amber)':'var(--red)');
+        let html = '<div class="score" style="color:'+col+'">'+(sc==null?'—':sc)+'<span style="font-size:15px;color:var(--muted)"> / 100 ('+d.strategy+')</span></div>';
+        html += '<div class="perfgrid">';
+        const lab=d.lab||{};
+        for(const [k,label] of [["LCP","Largest Contentful Paint"],["FCP","First Contentful Paint"],["CLS","Cumulative Layout Shift"],["TBT","Total Blocking Time"],["SI","Speed Index"]]){
+          if(lab[k]) html += '<div class="metric"><b>'+(lab[k].display||'—')+'</b><small>'+label+'</small></div>';
+        }
+        html += '</div>';
+        if(d.field && Object.keys(d.field).length){
+          html += '<p style="color:var(--muted);font-size:12.5px;margin-top:12px">Real-user data (CrUX): '
+            + Object.entries(d.field).map(([k,v])=>k+': '+v.replace(/_/g,' ').toLowerCase()).join(' · ')+'</p>';
+        }
+        $("perfOut").innerHTML = html;
+      }
+    }catch(e){ $("perfOut").innerHTML='<div class="bad">Request failed: '+e.message+'</div>'; }
+    $("runPerf").disabled=false; $("runPerf").textContent="Run performance test";
+  };
+</script>
+{% endif %}
+</body>
+</html>

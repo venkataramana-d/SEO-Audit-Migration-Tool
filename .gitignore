@@ -1,0 +1,19 @@
+# Secrets & credentials — never commit
+settings.json
+token.json
+oauth_client.json
+client_secret*.json
+*.key
+.env
+
+# Generated / local
+__pycache__/
+*.pyc
+*.xlsx
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migration Checklist — SEO Migration Toolkit</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.6}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 90px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px;transition:.12s}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+
+  h1{font-size:27px;margin:0 0 8px;letter-spacing:-.02em}
+  .lede{color:var(--muted);font-size:14.5px;max-width:64ch;margin:0 0 24px}
+  .legend{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px}
+  .legend span{font-size:12px;padding:4px 11px;border-radius:20px;font-weight:600}
+  .lg-critical{background:rgba(255,107,122,.16);color:var(--red)}
+  .lg-high{background:rgba(255,180,84,.16);color:var(--amber)}
+  .lg-standard{background:rgba(91,140,255,.16);color:var(--brand)}
+
+  .progress-wrap{position:sticky;top:0;z-index:5;border:1px solid var(--line);
+    background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:12px;
+    padding:14px 18px;margin-bottom:30px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 14px rgba(30,50,90,.06)}
+  .progress-bar{flex:1;height:9px;background:var(--card2);border-radius:99px;overflow:hidden}
+  .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--green));transition:width .25s}
+  .progress-text{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .resetbtn{background:var(--card2);border:1px solid var(--line);color:var(--muted);font-size:12px;
+    padding:6px 12px;border-radius:8px;cursor:pointer}
+  .resetbtn:hover{color:var(--red);border-color:var(--red)}
+
+  section.phase{margin-bottom:34px}
+  .phase-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+  .phase-head h2{font-size:19px;margin:0}
+  .phase-when{font-size:11.5px;color:var(--brand);background:rgba(91,140,255,.14);
+    padding:3px 11px;border-radius:20px;margin-left:auto;white-space:nowrap;font-weight:600}
+  .phase-intro{color:var(--muted);font-size:13.5px;margin:6px 0 16px;max-width:66ch}
+  /* keep it to the important action points, not a timed plan */
+  .phase-when,.phase-intro{display:none}
+  .phase-head{margin-bottom:12px}
+
+  .item{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px 17px;margin-bottom:9px;transition:.12s}
+  .item.done{background:var(--card2);opacity:.72}
+  .item-top{display:flex;gap:12px;align-items:flex-start}
+  .chk{flex:none;width:21px;height:21px;margin-top:1px;border:1.5px solid var(--grey);border-radius:6px;
+    cursor:pointer;background:transparent;position:relative;transition:.12s}
+  .chk[data-checked="true"]{background:var(--green);border-color:var(--green)}
+  .chk[data-checked="true"]::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+    border-right:2px solid #0f1220;border-bottom:2px solid #0f1220;transform:rotate(45deg)}
+  .item-title{font-weight:600;font-size:15px;flex:1}
+  .item.done .item-title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+  .tag{font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .tag.critical{background:var(--red);color:#fff}
+  .tag.high{background:var(--amber);color:#241800}
+  .tag.standard{background:var(--brand);color:#fff}
+  .item-body{padding-left:33px;margin-top:8px;font-size:13.5px;color:var(--ink)}
+  .item.done .item-body{opacity:.7}
+  .item-body b.why{color:var(--brand)} .item-body b.how{color:var(--green)}
+
+  footer{border-top:1px solid var(--line);margin-top:24px;padding:22px 0 0;color:var(--grey);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink active" href="/checklist">Migration Checklist</a>
+    <a class="navlink" href="/settings">Settings</a>
+  </nav>
+
+  <h1>Website Migration SEO Checklist</h1>
+  <p class="lede">The important points to cover when moving invensislearning.com to the new design without losing Google rankings. Tick each as you finish — progress is saved automatically. Focus on the <b>Critical</b> items first.</p>
+  <div style="background:rgba(31,157,107,.1);border:1px solid var(--green);color:#0f7a52;border-radius:10px;padding:12px 16px;margin-bottom:22px;font-size:13.5px">
+    <b>Scope:</b> URLs are <b>not changing</b> — only the design and content. This is the lowest-risk migration type (Google needs no re-mapping). The focus is preserving on-page content, titles, meta descriptions, canonicals and structured data — and making sure no URL accidentally breaks or changes.
+  </div>
+
+  <div class="legend">
+    <span class="lg-critical">Critical — do this or risk major traffic loss</span>
+    <span class="lg-high">High — strongly recommended</span>
+    <span class="lg-standard">Standard — good practice</span>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+    <div class="progress-text" id="ptext">0 of 0 done</div>
+    <button class="resetbtn" id="reset">Reset</button>
+  </div>
+
+  <section class="phase">
+    <div class="phase-head"><h2>1. Before you start</h2><span class="phase-when">4–6 weeks before</span></div>
+    <p class="phase-intro">Write down how the old site is performing today, so you can prove what changed later.</p>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Save 12 months of Google Search Console data</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> Your "before" picture — without it you can't tell how much traffic you lost or gained. <b class="how">How:</b> Export clicks, impressions and rankings from Search Console before you touch anything. <i>(The Site Audit tab already pulls this via GSC.)</i></div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Crawl the entire old website</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> A full list of every page that must be accounted for on the new site — nothing gets forgotten. <b class="how">How:</b> Use the Site Audit tab (or Screaming Frog) to list every URL, title, and status.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">List your most important pages</div><span class="tag high">High</span></div>
+      <div class="item-body"><b class="why">Why:</b> Your top-traffic and most-linked pages are the ones you can least afford to lose. <b class="how">How:</b> The Site Audit tab flags ★ TOP pages by GSC clicks — that's your "do not lose" list.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Note current rankings for key search terms</div><span class="tag standard">Standard</span></div>
+      <div class="item-body"><b class="why">Why:</b> Rankings move around normally — a clear "before" number tells you if a later drop is really the migration. <b class="how">How:</b> Save current positions for your most important keywords.</div></div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-head"><h2>2. Plan the move</h2><span class="phase-when">3–4 weeks before</span></div>
+    <p class="phase-intro">The most important phase. Getting this right is what actually protects your rankings.</p>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Confirm every URL stays exactly the same</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> You are keeping the same URLs — this is the lowest-risk migration, because Google needs no re-mapping. But it only holds if URLs are <i>truly identical</i>. <b class="how">How:</b> Compare this tool's crawled URL list against the new build; every path must match exactly.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Watch for accidental URL changes (slash, case, parameters)</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> Replatforms often silently change a trailing slash, letter case, or add tracking parameters — Google treats those as different URLs and rankings drop. <b class="how">How:</b> Spot-check that <code>/in/page/</code> stays <code>/in/page/</code> (not <code>/in/page</code> or <code>/in/Page</code>).</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Add a 301 redirect only for any URL that must change</div><span class="tag high">High</span></div>
+      <div class="item-body"><b class="why">Why:</b> Since URLs stay the same, you generally need no redirects — but if a few must change, a 301 preserves their ranking value. <b class="how">How:</b> Redirect just those specific URLs on the server (one hop, no chains). Everything else keeps its URL.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Carry over structured data (schema markup)</div><span class="tag high">High</span></div>
+      <div class="item-body"><b class="why">Why:</b> This gives you star ratings, FAQs and other rich results. Losing it is an immediate, visible downgrade. <b class="how">How:</b> List what schema each page type has now, and require the new site to include the same.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Pick a low-risk launch date</div><span class="tag standard">Standard</span></div>
+      <div class="item-body"><b class="why">Why:</b> If something breaks, you want time and attention to fix it — not during your busiest sales period. <b class="how">How:</b> Launch on a quiet day, early in the week, when your team can watch closely.</div></div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-head"><h2>3. Build &amp; test</h2><span class="phase-when">2–3 weeks before</span></div>
+    <p class="phase-intro">Catch problems on the test site, where fixing them is free — not on the live site, where it costs traffic.</p>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Block the test (staging) site from Google</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> If Google indexes your unfinished test site, it competes with your real site and confuses rankings. <b class="how">How:</b> Password-protect staging — don't rely on robots.txt alone.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Check the new site works well on mobile</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> Google mainly looks at the mobile version to decide rankings. <b class="how">How:</b> Compare mobile and desktop of key pages — make sure nothing important is missing on mobile.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Move over titles, descriptions and headings</div><span class="tag high">High</span></div>
+      <div class="item-body"><b class="why">Why:</b> Some of the most direct signals Google uses per page. Losing them resets years of work. <b class="how">How:</b> Import your saved titles/descriptions into the new pages, then spot-check a sample.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Test site speed on the new templates</div><span class="tag high">High</span></div>
+      <div class="item-body"><b class="why">Why:</b> A slower new site can rank worse than the old one, even with identical content. <b class="how">How:</b> Run each page type through Google PageSpeed Insights and fix anything flagged red.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Prepare the new sitemap.xml</div><span class="tag standard">Standard</span></div>
+      <div class="item-body"><b class="why">Why:</b> A ready sitemap helps Google find and re-crawl all new pages faster after launch. <b class="how">How:</b> Generate it from the final new-site URL list only.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Verify every URL still resolves (no new 404s)</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> Because URLs stay the same, the key risk is a page silently going missing on the new build. <b class="how">How:</b> Run the full crawled URL list against staging; every URL must return 200, not 404 — this tool's audit does exactly that.</div></div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-head"><h2>4. Launch day</h2><span class="phase-when">Go-live</span></div>
+    <p class="phase-intro">Follow this order exactly — most launch-day damage comes from doing these steps out of sequence.</p>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Remove any "block Google" settings from the new site</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> If the live site is still blocked, Google's first visit hits a dead end and delays everything. <b class="how">How:</b> Turn off password protection and noindex tags right before going live, and confirm it took effect.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Confirm all URLs load on the live site</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> URLs stay the same, so the launch-day risk is a page or section failing to load rather than a redirect. <b class="how">How:</b> Immediately after go-live, re-crawl and confirm no 404s or 5xx errors appeared.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Confirm HTTPS (the padlock) works</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> A broken certificate blocks visitors and Google alike and shows a scary warning. <b class="how">How:</b> Load the new site and check for the padlock with no warnings.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Confirm analytics tracking is working</div><span class="tag high">High</span></div>
+      <div class="item-body"><b class="why">Why:</b> If tracking is broken you lose the data needed to spot problems in the critical first days. <b class="how">How:</b> Load the live site and check it appears in Google Analytics real-time view.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Submit the sitemap &amp; request re-crawl in Search Console</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> Same domain and URLs, so no "Change of Address" is needed — but you still want Google to re-crawl the new pages quickly. <b class="how">How:</b> Submit the (unchanged) sitemap and use URL Inspection → Request Indexing on your top pages.</div></div>
+    <div class="item"><div class="item-top"><button class="chk" data-checked="false"></button><div class="item-title">Manually check your most important pages</div><span class="tag critical">Critical</span></div>
+      <div class="item-body"><b class="why">Why:</b> Your last checkpoint before real visitors and Google see any mistakes. <b class="how">How:</b> Click through your "do not lose" list plus a random sample of other pages on the live site.</div></div>
+  </section>
+
+  <footer>
+    Based on Google Search Central's official <em>Site Moves and Migrations</em> guidance. Treat timeframes as helpful guides, not guarantees — always check your own Search Console numbers. Progress is saved locally in this browser.
+  </footer>
+</div>
+
+<script>
+  const KEY = "seo_migration_checklist_v1";
+  const boxes = [...document.querySelectorAll('.chk')];
+  const fill = document.getElementById('fill');
+  const ptext = document.getElementById('ptext');
+
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify(boxes.map(b=>b.getAttribute('data-checked')==='true')));
+  }
+  function load(){
+    let saved=[]; try{ saved = JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){}
+    boxes.forEach((b,i)=>{
+      const on = !!saved[i];
+      b.setAttribute('data-checked', String(on));
+      b.closest('.item').classList.toggle('done', on);
+    });
+  }
+  function update(){
+    const done = boxes.filter(b=>b.getAttribute('data-checked')==='true').length;
+    fill.style.width = (boxes.length ? done/boxes.length*100 : 0)+'%';
+    ptext.textContent = done+' of '+boxes.length+' done';
+  }
+  boxes.forEach(btn=>btn.addEventListener('click', ()=>{
+    const on = btn.getAttribute('data-checked')==='true';
+    btn.setAttribute('data-checked', String(!on));
+    btn.closest('.item').classList.toggle('done', !on);
+    save(); update();
+  }));
+  document.getElementById('reset').addEventListener('click', ()=>{
+    localStorage.removeItem(KEY);
+    boxes.forEach(b=>{ b.setAttribute('data-checked','false'); b.closest('.item').classList.remove('done'); });
+    update();
+  });
+  load(); update();
+</script>
+</body>
+</html>

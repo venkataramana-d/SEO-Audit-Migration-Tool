@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — SEO Migration Toolkit</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px;transition:.12s}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  h1{font-size:25px;margin:0 0 6px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 26px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card h2{font-size:14px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .status{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-top:6px}
+  .status.ok{color:var(--green)} .status.no{color:var(--red)}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.ok{background:var(--green)} .dot.no{background:var(--red)}
+  .props{margin:10px 0 0;font-size:13px;color:var(--muted)}
+  label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin:14px 0 6px}
+  input[type=text]{width:100%;background:#fff;border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:11px 13px;font-size:14px;outline:none}
+  input:focus{border-color:var(--brand)}
+  .hint{font-size:12px;color:var(--grey);margin-top:6px}
+  .hint a{color:var(--brand)}
+  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;
+    border-radius:10px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px}
+  .saved{background:rgba(31,157,107,.12);border:1px solid var(--green);color:var(--green);
+    padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:18px}
+  ol{font-size:13px;color:var(--muted);padding-left:20px;margin:8px 0 0}
+  ol li{margin-bottom:4px}
+  code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink" href="/checklist">Migration Checklist</a>
+    <a class="navlink active" href="/settings">Settings</a>
+  </nav>
+
+  <h1>Settings &amp; API keys</h1>
+  <p class="lede">Connect data sources that power the audit. Everything is stored locally on this machine.</p>
+
+  {% if saved %}<div class="saved">✓ Settings saved.</div>{% endif %}
+
+  <div class="card">
+    <h2>Google Search Console</h2>
+    {% if gsc_connected %}
+      <div class="status ok"><span class="dot ok"></span> Connected</div>
+      <p class="props">Traffic data is available. Tick “Include GSC” on the Site Audit tab to flag your top pages.</p>
+    {% else %}
+      <div class="status no"><span class="dot no"></span> Not connected</div>
+      <p class="props">Run <code>python gsc_auth.py</code> once in the tool folder to authorize, then reload this page.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>PageSpeed Insights API key</h2>
+    <p class="lede" style="margin:2px 0 0">Enables real performance &amp; Core Web Vitals data on each URL’s technical audit page.</p>
+    <form method="POST">
+      <label for="k">API key (optional — works without one at low volume)</label>
+      <input type="text" id="k" name="pagespeed_api_key" value="{{ settings.pagespeed_api_key or '' }}" placeholder="AIza…">
+      <div class="hint">Get a free key: <a href="https://developers.google.com/speed/docs/insights/v5/get-started" target="_blank" rel="noopener">PageSpeed Insights → Get a Key</a>. It's a plain API key (unlike GSC's OAuth).</div>
+      <button class="btn" type="submit">Save</button>
+    </form>
+    <ol>
+      <li>In Google Cloud (your “My First Project”), enable the <b>PageSpeed Insights API</b>.</li>
+      <li>APIs &amp; Services → Credentials → <b>Create credentials → API key</b>.</li>
+      <li>Paste it above and Save. Then open any URL’s audit page and click <b>Run performance test</b>.</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

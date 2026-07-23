@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEO Pre-Migration Audit Tool</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 60px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .topnav .brand{font-weight:800;font-size:14px;letter-spacing:-.01em;margin-right:14px;color:var(--ink)}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px;transition:.12s}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  header h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
+  header p{color:var(--muted);margin:0 0 24px;font-size:14px}
+  .badge{display:inline-block;background:var(--card2);color:var(--brand);
+    padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-left:8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px;margin-bottom:20px;box-shadow:0 6px 20px rgba(30,50,90,.06)}
+  .card h2{font-size:15px;margin:0 0 18px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.08em;font-weight:700}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  input[type=text],input[type=number]{width:100%;background:var(--card2);
+    border:1px solid var(--line);color:var(--ink);border-radius:10px;
+    padding:11px 13px;font-size:14px;outline:none}
+  input:focus{border-color:var(--brand)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .row3{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .full{grid-column:1/-1}
+  .check{display:flex;align-items:center;gap:10px;background:var(--card2);
+    border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+  .check input{width:18px;height:18px;accent-color:var(--brand)}
+  .check span{font-size:13px}
+  .hint{font-size:12px;color:var(--grey);margin-top:5px}
+  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;
+    border:none;border-radius:11px;padding:13px 26px;font-size:15px;font-weight:700;
+    cursor:pointer;transition:.15s;box-shadow:0 6px 18px rgba(58,107,255,.4)}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.ghost{background:var(--card2);box-shadow:none;color:var(--muted)}
+  .btn.green{background:linear-gradient(135deg,#37c98a,#25a06c);box-shadow:0 6px 18px rgba(55,201,138,.4)}
+  .actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  #panel{display:none}
+  .bar{height:10px;background:var(--card2);border-radius:8px;overflow:hidden;margin:14px 0}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--green));
+    transition:width .3s}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:8px}
+  .stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+  .stat b{display:block;font-size:26px;letter-spacing:-.02em}
+  .stat small{color:var(--muted);font-size:12px}
+  .stat.green b{color:var(--green)} .stat.red b{color:var(--red)}
+  .phase{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .cur{font-size:12px;color:var(--grey);word-break:break-all;margin-top:6px;min-height:16px}
+  .sev{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .sev div{border-radius:10px;padding:12px;text-align:center;font-weight:700}
+  .sev .c{background:rgba(255,107,122,.15);color:var(--red)}
+  .sev .h{background:rgba(255,180,84,.15);color:var(--amber)}
+  .sev .m{background:rgba(91,140,255,.15);color:var(--brand)}
+  .sev .l{background:rgba(138,151,184,.15);color:var(--grey)}
+  .sev small{display:block;font-weight:500;font-size:11px;opacity:.8;margin-top:3px}
+  .err{background:rgba(255,107,122,.12);border:1px solid var(--red);color:#ffb3bb;
+    padding:12px 14px;border-radius:10px;font-size:13px;margin-top:12px;display:none}
+  .foot{color:var(--grey);font-size:12px;text-align:center;margin-top:30px}
+
+  /* ---- results explorer ---- */
+  #results{display:none;margin-top:22px}
+  .resSummary{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .resSummary .box{flex:1;min-width:120px;background:var(--card2);border:1px solid var(--line);
+    border-radius:11px;padding:14px 16px;text-align:center}
+  .resSummary .box b{display:block;font-size:24px;letter-spacing:-.02em}
+  .resSummary .box small{color:var(--muted);font-size:12px}
+  .resSummary .box.total b{color:var(--brand)}
+  .resSummary .box.clear b{color:var(--green)}
+  .resSummary .box.issue b{color:var(--red)}
+  .usub{display:flex;flex-wrap:wrap;gap:6px 14px;padding:0 15px 11px 60px;font-size:12px;color:var(--muted)}
+  .usub .cc{color:var(--ink);font-weight:600}
+  .usub .warn{color:var(--amber)}
+  .canon{font-weight:700}
+  .canon.ok{color:var(--green)} .canon.mismatch{color:var(--amber)} .canon.missing{color:var(--red)}
+  .filterbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .filterbar input[type=text]{flex:1;min-width:180px}
+  .filterbar select{background:var(--card2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:11px 13px;font-size:13px;outline:none;cursor:pointer}
+  .rcount{font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .urow{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);
+    border-radius:11px;margin-bottom:8px;overflow:hidden;background:var(--card);transition:.12s}
+  .urow:hover{border-color:var(--brand);box-shadow:0 2px 10px rgba(58,107,255,.12)}
+  .uhead{display:flex;align-items:center;gap:12px;padding:13px 15px;cursor:pointer}
+  .num{color:var(--grey);font-size:12px;width:34px;flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0}
+  .st-ok{background:rgba(55,201,138,.16);color:var(--green)}
+  .st-warn{background:rgba(255,180,84,.16);color:var(--amber)}
+  .st-err{background:rgba(255,107,122,.16);color:var(--red)}
+  .v-clear{background:rgba(55,201,138,.16);color:var(--green)}
+  .v-issues{background:rgba(255,107,122,.16);color:var(--red)}
+  .v-top{background:linear-gradient(135deg,#f6c745,#e0a010);color:#3a2c00;box-shadow:0 0 0 1px rgba(246,199,69,.4)}
+  .gscbox{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;background:rgba(246,199,69,.08);
+    border:1px solid rgba(246,199,69,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px}
+  .gscbox b{color:#b8860b}
+  .uurl{flex:1;font-size:13px;word-break:break-all;color:var(--ink);display:flex;flex-direction:column;gap:1px}
+  .upath{font-weight:600;font-size:13.5px}
+  .udom{font-size:11px;color:var(--grey);font-weight:400}
+  .caret{color:var(--grey);flex-shrink:0;transition:.15s}
+  .urow.open .caret{transform:rotate(90deg)}
+  .udetail{display:none;border-top:1px solid var(--line);padding:14px;background:var(--card)}
+  .urow.open .udetail{display:block}
+  .metaline{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:var(--muted);
+    margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+  .metaline b{color:var(--ink);font-weight:600}
+  .clearmsg{color:var(--green);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+  .issue{border-left:3px solid var(--line);padding:10px 0 10px 14px;margin-bottom:12px}
+  .issue.Critical{border-color:var(--red)} .issue.High{border-color:var(--amber)}
+  .issue.Medium{border-color:var(--brand)} .issue.Low{border-color:var(--grey)}
+  .ihead{display:flex;align-items:center;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+  .sevchip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.03em}
+  .sevchip.Critical{background:var(--red);color:#fff} .sevchip.High{background:var(--amber);color:#000}
+  .sevchip.Medium{background:var(--brand);color:#fff} .sevchip.Low{background:var(--grey);color:#fff}
+  .icheck{font-weight:700;font-size:13px}
+  .idetail{font-size:13px;color:var(--ink);margin:3px 0}
+  .imeta{font-size:12px;margin:4px 0}
+  .imeta .k{color:var(--muted);font-weight:600;margin-right:5px}
+  .imeta.loc{color:var(--grey);font-family:ui-monospace,monospace;font-size:11px}
+  .imeta.fix .k{color:var(--green)} .imeta.why .k{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink active" href="/">Site Audit</a>
+    <a class="navlink" href="/checklist">Migration Checklist</a>
+    <a class="navlink" href="/settings">Settings</a>
+  </nav>
+
+  <header>
+    <h1>SEO Pre-Migration Audit <span class="badge">invensislearning.com</span></h1>
+    <p>Crawl the current site, audit every page, and export a color-coded report to protect rankings through migration.</p>
+  </header>
+
+  <div class="card" id="config">
+    <h2>Configuration</h2>
+    <div class="row">
+      <div class="full">
+        <label>Start URL (crawl scope)</label>
+        <input type="text" id="start_url" value="https://www.invensislearning.com/in/">
+        <div class="hint">Only URLs under this path are crawled (e.g. the /in/ section).</div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Max pages (up to 15000)</label>
+        <input type="number" id="max_pages" value="200" min="1" max="15000">
+        <div class="hint">Start small (200) to test, then raise for a full run.</div>
+      </div>
+      <div>
+        <label>Concurrent workers</label>
+        <input type="number" id="workers" value="8" min="1" max="16">
+        <div class="hint">Higher = faster but heavier on the server. 8 is polite.</div>
+      </div>
+    </div>
+    <div class="row" id="gscrow">
+      <label class="check full">
+        <input type="checkbox" id="include_gsc" checked>
+        <span>Include Google Search Console data (clicks/impressions per page, flags top pages). Needs one-time login (already done).</span>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn" id="runBtn">Run Audit</button>
+      <button class="btn ghost" id="stopBtn" style="display:none">Stop</button>
+    </div>
+    <div class="err" id="cfgErr"></div>
+  </div>
+
+  <div class="card" id="panel">
+    <h2>Progress</h2>
+    <div class="phase"><span class="dot" id="dot"></span><span id="phaseTxt">Starting…</span></div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="stat-grid">
+      <div class="stat"><b id="sCrawled">0</b><small>Pages crawled</small></div>
+      <div class="stat"><b id="sFound">0</b><small>URLs discovered</small></div>
+      <div class="stat green"><b id="sClear">–</b><small>Clear pages</small></div>
+      <div class="stat red"><b id="sIssues">–</b><small>Total issues</small></div>
+    </div>
+    <div class="cur" id="curUrl"></div>
+
+    <div id="sevWrap" style="display:none">
+      <div class="sev">
+        <div class="c"><span id="svC">0</span><small>Critical</small></div>
+        <div class="h"><span id="svH">0</span><small>High</small></div>
+        <div class="m"><span id="svM">0</span><small>Medium</small></div>
+        <div class="l"><span id="svL">0</span><small>Low</small></div>
+      </div>
+    </div>
+
+    <div class="err" id="runErr"></div>
+    <span class="hint" id="gscNote"></span>
+
+    <div id="results">
+      <div class="resSummary" id="resSummary"></div>
+      <div class="filterbar">
+        <input type="text" id="fSearch" placeholder="Search URL or issue…">
+        <select id="fVerdict">
+          <option value="all">All pages</option>
+          <option value="ISSUES">Only with issues</option>
+          <option value="CLEAR">Only clear</option>
+          <option value="TOP">Only top pages (GSC)</option>
+        </select>
+        <select id="fSeverity">
+          <option value="all">Any severity</option>
+          <option value="Critical">Has Critical</option>
+          <option value="High">Has High</option>
+          <option value="Medium">Has Medium</option>
+          <option value="Low">Has Low</option>
+        </select>
+        <select id="fSort">
+          <option value="issues">Sort: most issues</option>
+          <option value="clicks">Sort: most GSC clicks</option>
+          <option value="url">Sort: URL A–Z</option>
+          <option value="status">Sort: status code</option>
+        </select>
+        <select id="fGscPeriod" style="display:none" title="GSC traffic period">
+          <option value="90">GSC: last 3 months</option>
+          <option value="365">GSC: last 12 months</option>
+        </select>
+        <span class="rcount" id="rCount"></span>
+      </div>
+      <div id="urlList"></div>
+    </div>
+  </div>
+
+  <div class="foot">Runs entirely on your machine · no data leaves this computer except requests to the site being audited.</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let jobId = null, poll = null;
+
+$("runBtn").onclick = async () => {
+  $("cfgErr").style.display = "none";
+  const body = {
+    start_url: $("start_url").value,
+    max_pages: $("max_pages").value,
+    workers: $("workers").value,
+    include_gsc: $("include_gsc").checked,
+    gsc_property: "https://www.invensislearning.com/",
+    path_filter: "/in/",
+  };
+  const r = await fetch("/api/start", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j = await r.json();
+  if (j.error){ $("cfgErr").textContent = j.error; $("cfgErr").style.display="block"; return; }
+  jobId = j.job_id;
+  $("runBtn").disabled = true;
+  $("stopBtn").style.display = "inline-block";
+  $("panel").style.display = "block";
+  $("results").style.display = "none";
+  $("sevWrap").style.display = "none";
+  $("urlList").innerHTML = "";
+  $("panel").scrollIntoView({behavior:"smooth"});
+  poll = setInterval(tick, 800);
+};
+
+$("stopBtn").onclick = async () => {
+  if(jobId) await fetch("/api/stop/"+jobId,{method:"POST"});
+};
+
+const PHASES = {starting:"Starting…",crawling:"Crawling pages…",auditing:"Auditing on-page SEO…",
+  gsc:"Fetching Search Console data…",report:"Building Excel report…",
+  complete:"Audit complete ✓",stopped:"Stopped",error:"Error"};
+
+async function tick(){
+  const r = await fetch("/api/progress/"+jobId);
+  const p = await r.json();
+  $("phaseTxt").textContent = PHASES[p.phase] || p.phase;
+  $("sCrawled").textContent = p.crawled;
+  $("sFound").textContent = p.found;
+  $("curUrl").textContent = p.current ? "→ " + p.current : "";
+  const pct = p.found ? Math.min(100, Math.round(p.crawled/Math.max(p.found,1)*100)) : 5;
+  $("barFill").style.width = (p.done?100:pct) + "%";
+
+  if (p.summary){
+    $("sClear").textContent = p.summary.pages_clear;
+    $("sIssues").textContent = p.summary.total_issues;
+    const s = p.summary.by_severity;
+    $("svC").textContent=s.Critical||0; $("svH").textContent=s.High||0;
+    $("svM").textContent=s.Medium||0; $("svL").textContent=s.Low||0;
+    $("sevWrap").style.display="block";
+  }
+  if (p.error){
+    $("runErr").textContent = "Error: " + p.error;
+    $("runErr").style.display = "block";
+  }
+  if (p.gsc_error){
+    $("gscNote").textContent = "GSC skipped: " + p.gsc_error;
+  }
+  if (p.done){
+    clearInterval(poll);
+    $("dot").style.animation="none";
+    $("runBtn").disabled = false;
+    $("stopBtn").style.display = "none";
+    await loadResults();
+  }
+}
+
+// ---------- results explorer ----------
+let PAGES = [], ISSUES = {}, GSC = {}, GSC_90 = {}, GSC_365 = {};
+const SEV_RANK = {Critical:0, High:1, Medium:2, Low:3};
+
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function gscKey(u){return (u||"").replace(/\/$/,"");}
+function gscOf(p){return GSC[gscKey(p.url)] || null;}
+function nfmt(n){return (n||0).toLocaleString();}
+
+async function loadResults(){
+  const r = await fetch("/api/results/"+jobId);
+  if(!r.ok){ sessionStorage.removeItem("lastJob"); return false; }
+  const d = await r.json();
+  if(!d.pages || !d.pages.length){ return false; }
+  PAGES = d.pages || [];
+  ISSUES = d.issues_by_url || {};
+  GSC_90 = d.gsc_map_90 || d.gsc_map || {};
+  GSC_365 = d.gsc_map_365 || {};
+  GSC = ($("fGscPeriod") && $("fGscPeriod").value === "365") ? GSC_365 : GSC_90;
+
+  // populate the summary panel (works for live completion AND restore-on-back)
+  if(d.summary){
+    $("sCrawled").textContent = d.summary.pages_crawled;
+    $("sFound").textContent = d.summary.pages_crawled;
+    $("sClear").textContent = d.summary.pages_clear;
+    $("sIssues").textContent = d.summary.total_issues;
+    const s = d.summary.by_severity || {};
+    $("svC").textContent=s.Critical||0; $("svH").textContent=s.High||0;
+    $("svM").textContent=s.Medium||0; $("svL").textContent=s.Low||0;
+    $("sevWrap").style.display="block";
+    const totalFound = d.summary.total_found || d.summary.pages_crawled;
+    const smap = d.summary.sitemap_scope || 0;
+    $("resSummary").innerHTML =
+      (smap ? '<div class="box"><b>'+nfmt(smap)+'</b><small>URLs in sitemap</small></div>' : '')
+      + '<div class="box total"><b>'+nfmt(totalFound)+'</b><small>Total URLs found</small></div>'
+      + '<div class="box"><b>'+nfmt(d.summary.pages_crawled)+'</b><small>URLs audited</small></div>'
+      + '<div class="box clear"><b>'+nfmt(d.summary.pages_clear)+'</b><small>Clear pages</small></div>'
+      + '<div class="box issue"><b>'+nfmt(d.summary.total_issues)+'</b><small>Total issues</small></div>';
+  }
+  $("phaseTxt").textContent = "Audit complete ✓";
+  $("dot").style.animation = "none";
+  $("barFill").style.width = "100%";
+
+  // show the GSC sort/filter only when we actually have data
+  const hasGsc = Object.keys(GSC_90).length > 0 || Object.keys(GSC_365).length > 0;
+  $("fSort").querySelector('option[value=clicks]').style.display = hasGsc ? "" : "none";
+  $("fVerdict").querySelector('option[value=TOP]').style.display = hasGsc ? "" : "none";
+  $("fGscPeriod").style.display = hasGsc ? "" : "none";
+  if (hasGsc && $("fSort").value !== "clicks") $("fSort").value = "clicks";
+
+  sessionStorage.setItem("lastJob", jobId);   // remember for back navigation
+  $("panel").style.display = "block";
+  $("results").style.display = "block";
+  render();
+  return true;
+}
+
+function statusClass(s){ if(s>=200&&s<300)return"st-ok"; if(s>=300&&s<400)return"st-warn"; return"st-err"; }
+
+function render(){
+  const q = $("fSearch").value.toLowerCase().trim();
+  const fv = $("fVerdict").value;
+  const fs = $("fSeverity").value;
+  const sort = $("fSort").value;
+
+  let list = PAGES.filter(p=>{
+    if(fv==="TOP"){ if(!gscOf(p)) return false; }
+    else if(fv!=="all" && p.verdict!==fv) return false;
+    const iss = ISSUES[p.url] || [];
+    if(fs!=="all" && !iss.some(i=>i.severity===fs)) return false;
+    if(q){
+      const inUrl = (p.url||"").toLowerCase().includes(q);
+      const inIss = iss.some(i=>(i.check+" "+i.detail).toLowerCase().includes(q));
+      const inTitle = (p.title||"").toLowerCase().includes(q);
+      if(!inUrl && !inIss && !inTitle) return false;
+    }
+    return true;
+  });
+
+  list.sort((a,b)=>{
+    if(sort==="url") return (a.url>b.url?1:-1);
+    if(sort==="status") return (b.status||0)-(a.status||0);
+    if(sort==="clicks") return ((gscOf(b)||{}).clicks||0)-((gscOf(a)||{}).clicks||0);
+    return (b.issue_count||0)-(a.issue_count||0); // most issues first
+  });
+
+  $("rCount").textContent = list.length+" of "+PAGES.length+" pages";
+
+  $("urlList").innerHTML = list.map((p,idx)=>{
+    const g = gscOf(p);
+    const verdictPill = p.verdict==="CLEAR"
+      ? '<span class="pill v-clear">CLEAR</span>'
+      : '<span class="pill v-issues">'+p.issue_count+' issue'+(p.issue_count>1?'s':'')+'</span>';
+    const topPill = g
+      ? '<span class="pill v-top" title="Top page in Search Console — preserve its URL & rankings">★ TOP #'+g.rank+' · '+nfmt(g.clicks)+' clicks</span>'
+      : '';
+    const href = "/page?job="+encodeURIComponent(jobId)+"&url="+encodeURIComponent(p.url);
+    // character-count chips (color a value amber when outside the recommended range)
+    const tCls = (p.title_len>=30 && p.title_len<=60) ? "cc" : "cc warn";
+    const dCls = (p.meta_desc_len>=70 && p.meta_desc_len<=160) ? "cc" : "cc warn";
+    const cs = p.canonical_status || "missing";
+    const canonTxt = cs==="ok" ? "Canonical ✓" : (cs==="mismatch" ? "Canonical ≠" : "Canonical ✗");
+    // split URL into readable path + muted domain (landing-page clarity)
+    let path = p.url, dom = "";
+    try { const u = new URL(p.url); dom = u.host; path = u.pathname + u.search; } catch(e){}
+    const clicks = g ? '<span>GSC <span class="cc">'+nfmt(g.clicks)+' clk</span></span>' : '';
+    const broken = p.broken_links ? '<span class="warn">'+p.broken_links+' broken link'+(p.broken_links>1?'s':'')+'</span>' : '';
+    const noflw = p.internal_nofollow ? '<span class="warn">'+p.internal_nofollow+' int nofollow</span>' : '';
+    const schema = '<span class="'+(p.has_schema?'cc':'warn')+'">Schema '+(p.has_schema?'✓':'✗')+'</span>';
+    const sub = '<div class="usub">'
+      + '<span>Title <span class="'+tCls+'">'+p.title_len+'</span></span>'
+      + '<span>Desc <span class="'+dCls+'">'+p.meta_desc_len+'</span></span>'
+      + '<span>H1 <span class="cc">'+p.h1_count+'</span></span>'
+      + '<span class="canon '+cs+'">'+canonTxt+'</span>'
+      + schema
+      + '<span>Links <span class="cc">'+p.internal_links+'i/'+p.external_links+'e</span></span>'
+      + broken + noflw + clicks + '</div>';
+    return '<a class="urow" href="'+href+'">'
+      + '<div class="uhead">'
+      + '<span class="num">'+(idx+1)+'</span>'
+      + '<span class="pill '+statusClass(p.status)+'">'+p.status+'</span>'
+      + verdictPill
+      + topPill
+      + '<span class="uurl"><b class="upath">'+esc(path)+'</b><span class="udom">'+esc(dom)+'</span></span>'
+      + '<span class="caret">›</span></div>'
+      + sub + '</a>';
+  }).join("") || '<div class="hint">No pages match the current filters.</div>';
+}
+
+["fSearch","fVerdict","fSeverity","fSort"].forEach(id=>{
+  const el=$(id); el.addEventListener(id==="fSearch"?"input":"change", render);
+});
+
+// switch GSC traffic period (last 3 months / last 28 days)
+$("fGscPeriod").addEventListener("change", ()=>{
+  GSC = $("fGscPeriod").value === "365" ? GSC_365 : GSC_90;
+  render();
+});
+
+// restore the last crawl when returning from a URL's detail page
+(function restoreLastAudit(){
+  const j = sessionStorage.getItem("lastJob");
+  if(!j) return;
+  jobId = j;
+  loadResults().catch(()=>{ sessionStorage.removeItem("lastJob"); });
+})();
+</script>
+</body>
+</html>
