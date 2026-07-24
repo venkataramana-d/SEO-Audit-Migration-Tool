@@ -140,16 +140,11 @@ def run_job(job_id, params):
         job["gsc_map_90"] = gsc_map_90
         job["gsc_map_365"] = gsc_map_365
 
-        job["phase"] = "report"
-        meta = {"start_url": params["start_url"],
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M")}
-        # rebuild rows (page, clicks, impressions, ctr, position) from the 3-month map
-        gsc_rows = [[u, v["clicks"], v["impressions"], v["ctr"], v["position"]]
-                    for u, v in sorted(gsc_map_90.items(),
-                                       key=lambda x: -x[1]["clicks"])] or None
-        bio = report.build_workbook(summary, page_index, all_issues, meta, gsc_rows)
-
-        job["report_bytes"] = bio.getvalue()
+        # The Excel report is built ON DEMAND (see /api/download), not here — for
+        # large crawls (tens of thousands of issue rows) it can take minutes and
+        # was blocking the whole job from completing. Store what it needs instead.
+        job["report_meta"] = {"start_url": params["start_url"],
+                              "date": datetime.now().strftime("%Y-%m-%d %H:%M")}
         job["summary"] = summary
         job["phase"] = "complete"
         job["done"] = True
@@ -346,8 +341,19 @@ def stop(job_id):
 @app.route("/api/download/<job_id>")
 def download(job_id):
     job = JOBS.get(job_id)
-    if not job or not job.get("report_bytes"):
+    if not job or not job.get("page_index"):
         abort(404)
+    # build the workbook on demand (and cache it on the job)
+    if not job.get("report_bytes"):
+        page_index = job["page_index"]
+        all_issues = [i for lst in job.get("issues_by_url", {}).values() for i in lst]
+        gsc_map = job.get("gsc_map_90", {})
+        gsc_rows = [[u, v["clicks"], v["impressions"], v["ctr"], v["position"]]
+                    for u, v in sorted(gsc_map.items(),
+                                       key=lambda x: -x[1]["clicks"])] or None
+        bio = report.build_workbook(job["summary"], page_index, all_issues,
+                                    job.get("report_meta", {}), gsc_rows)
+        job["report_bytes"] = bio.getvalue()
     from io import BytesIO
     bio = BytesIO(job["report_bytes"])
     bio.seek(0)

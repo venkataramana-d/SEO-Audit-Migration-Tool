@@ -43,14 +43,16 @@ def _header(ws, headers):
     ws.freeze_panes = "A2"
 
 
-def _autosize(ws, wrap_cols=(), max_w=70):
-    for col in ws.columns:
+def _autosize(ws, wrap_cols=(), max_w=70, sample=300):
+    # size columns from the header + a sample of rows (scanning every cell on a
+    # 60k-row sheet is what made large reports hang)
+    for col in ws.iter_cols(max_row=min(ws.max_row, sample)):
         letter = get_column_letter(col[0].column)
         width = max((len(str(c.value)) for c in col if c.value is not None), default=10)
         ws.column_dimensions[letter].width = min(width + 3, max_w)
     for wc in wrap_cols:
         ws.column_dimensions[wc].width = max_w
-        for cell in ws[wc]:
+        for cell in ws[wc][:sample]:
             cell.alignment = Alignment(wrap_text=True, vertical="top")
 
 
