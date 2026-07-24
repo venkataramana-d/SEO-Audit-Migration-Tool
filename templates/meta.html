@@ -154,7 +154,9 @@ $("runBtn").onclick=async()=>{
   const r=await fetch("/api/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const j=await r.json();
   if(j.error){$("cfgErr").textContent=j.error;$("cfgErr").style.display="block";return;}
-  jobId=j.job_id;$("runBtn").disabled=true;$("panel").style.display="block";$("results").style.display="none";
+  jobId=j.job_id;
+  sessionStorage.setItem("lastMetaJob", jobId);   // remember immediately
+  $("runBtn").disabled=true;$("panel").style.display="block";$("results").style.display="none";
   poll=setInterval(tick,800);
 };
 
@@ -179,10 +181,20 @@ async function load(){
   $("results").style.display="block";render();
 }
 
-// restore the last meta audit when returning from a detail page
-(function restoreLastMeta(){
+// restore the last meta audit when returning — resume polling if still running
+(async function restoreLastMeta(){
   const j=sessionStorage.getItem("lastMetaJob");
-  if(j){ jobId=j; load().catch(()=>sessionStorage.removeItem("lastMetaJob")); }
+  if(!j) return;
+  jobId=j;
+  let p;
+  try{
+    const r=await fetch("/api/progress/"+jobId);
+    if(!r.ok){ sessionStorage.removeItem("lastMetaJob"); return; }
+    p=await r.json();
+  }catch(e){ sessionStorage.removeItem("lastMetaJob"); return; }
+  $("panel").style.display="block";
+  if(p.done){ await load(); }
+  else { $("runBtn").disabled=true; poll=setInterval(tick,800); }
 })();
 
 function render(){

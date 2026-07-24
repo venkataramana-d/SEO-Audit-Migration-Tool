@@ -325,6 +325,7 @@ $("runBtn").onclick = async () => {
   const j = await r.json();
   if (j.error){ $("cfgErr").textContent = j.error; $("cfgErr").style.display="block"; return; }
   jobId = j.job_id;
+  sessionStorage.setItem("lastJob", jobId);   // remember immediately so leaving & returning resumes
   $("runBtn").disabled = true;
   $("stopBtn").style.display = "inline-block";
   $("panel").style.display = "block";
@@ -516,12 +517,26 @@ $("fGscPeriod").addEventListener("change", ()=>{
   render();
 });
 
-// restore the last crawl when returning from a URL's detail page
-(function restoreLastAudit(){
+// restore the last audit when returning — resume live polling if it's still running
+(async function restoreLastAudit(){
   const j = sessionStorage.getItem("lastJob");
   if(!j) return;
   jobId = j;
-  loadResults().catch(()=>{ sessionStorage.removeItem("lastJob"); });
+  let p;
+  try{
+    const r = await fetch("/api/progress/"+jobId);
+    if(!r.ok){ sessionStorage.removeItem("lastJob"); return; }
+    p = await r.json();
+  }catch(e){ sessionStorage.removeItem("lastJob"); return; }
+  $("panel").style.display = "block";
+  if(p.done){
+    await loadResults();
+  } else {
+    // the crawl is still running on the server — reconnect and keep showing progress
+    $("runBtn").disabled = true;
+    $("stopBtn").style.display = "inline-block";
+    poll = setInterval(tick, 800);
+  }
 })();
 </script>
 </body>
