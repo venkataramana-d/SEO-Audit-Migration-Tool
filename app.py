@@ -55,6 +55,18 @@ def run_job(job_id, params):
         def progress(**kw):
             job.update(kw)
 
+        # resolve the URL list depending on input mode
+        url_list = params.get("url_list")
+        if params.get("mode") == "sitemap" and params.get("sitemap_url"):
+            job["phase"] = "sitemap"
+            url_list = crawler.collect_sitemap_urls(params["sitemap_url"],
+                                                    max_urls=params["max_pages"])
+            if not url_list:
+                job["error"] = "No URLs found in that sitemap."
+                job["phase"] = "error"
+                job["done"] = True
+                return
+
         job["phase"] = "crawling"
         c = crawler.Crawler(
             start_url=params["start_url"],
@@ -62,6 +74,7 @@ def run_job(job_id, params):
             workers=params["workers"],
             progress_cb=progress,
             stop_flag=stop,
+            url_list=url_list,
         )
         pages, status_map = c.run()
         if stop.is_set():
@@ -72,9 +85,12 @@ def run_job(job_id, params):
         job["phase"] = "auditing"
         all_issues, page_index = auditor.audit_all(pages)
         summary = auditor.summarize(page_index, all_issues)
-        summary["total_found"] = len(c.seen)          # all in-scope URLs discovered
-        summary["sitemap_total"] = c.sitemap_total    # URLs declared across all sitemaps
-        summary["sitemap_scope"] = c.sitemap_scope    # sitemap URLs within crawl scope
+        summary["total_found"] = len(c.seen)          # URLs discovered / provided
+        summary["sitemap_total"] = c.sitemap_total
+        # in sitemap mode, report how many URLs the sitemap declared
+        summary["sitemap_scope"] = len(url_list) if (params.get("mode") == "sitemap"
+                                                     and url_list) else 0
+        summary["mode"] = params.get("mode", "url")
 
         # group issues by URL for the interactive explorer
         from collections import defaultdict
@@ -147,6 +163,11 @@ def checklist():
     return render_template("checklist.html")
 
 
+@app.route("/meta")
+def meta_page():
+    return render_template("meta.html")
+
+
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     s = load_settings()
@@ -181,6 +202,32 @@ def page_detail():
                            has_perf_key=bool(load_settings().get("pagespeed_api_key")))
 
 
+@app.route("/page/links")
+def page_links():
+    job_id = request.args.get("job", "")
+    url = request.args.get("url", "")
+    job = JOBS.get(job_id)
+    if not job or not job.get("pages_by_url") or url not in job["pages_by_url"]:
+        return render_template("link_analysis.html", not_found=True, url=url), 404
+    page = job["pages_by_url"][url]
+    links = []
+    for l in page.get("links", []):
+        st = l.get("status")
+        issue = None
+        if st is not None and (st == 0 or st >= 400):
+            issue = "broken"
+        elif l["internal"] and l["nofollow"]:
+            issue = "internal-nofollow"
+        elif (not l["internal"]) and (not l["nofollow"]) \
+                and not l.get("sponsored") and not l.get("ugc"):
+            issue = "external-dofollow"
+        elif l["target_blank"] and not l["noopener"]:
+            issue = "unsafe-blank"
+        links.append({**l, "issue": issue})
+    return render_template("link_analysis.html", not_found=False, job_id=job_id,
+                           page=page, links=links, url=url)
+
+
 @app.route("/api/perf")
 def api_perf():
     url = request.args.get("url", "")
@@ -193,34 +240,53 @@ def api_perf():
 
 @app.route("/api/start", methods=["POST"])
 def start():
+    from urllib.parse import urlparse
     data = request.get_json(force=True)
-    start_url = (data.get("start_url") or "").strip()
-    if not start_url.startswith("http"):
-        return jsonify({"error": "Enter a valid URL starting with http/https."}), 400
+    mode = (data.get("input_mode") or "url").lower()
+
+    # collect the list of URLs to audit depending on the input mode
+    url_list = None
+    sitemap_url = None
+    if mode in ("csv", "paste"):
+        url_list = [u.strip() for u in (data.get("url_list") or []) if u.strip().startswith("http")]
+        if not url_list:
+            return jsonify({"error": "No valid http(s) URLs found in the uploaded/pasted list."}), 400
+        base = url_list[0]
+    elif mode == "sitemap":
+        sitemap_url = (data.get("sitemap_url") or "").strip()
+        if not sitemap_url.startswith("http"):
+            return jsonify({"error": "Enter a valid sitemap URL (https://…/sitemap.xml)."}), 400
+        base = sitemap_url
+    else:  # url crawl
+        base = (data.get("start_url") or "").strip()
+        if not base.startswith("http"):
+            return jsonify({"error": "Enter a valid URL starting with http/https."}), 400
 
     try:
         max_pages = max(1, min(int(data.get("max_pages", 500)), 15000))
     except (TypeError, ValueError):
         max_pages = 500
 
+    pu = urlparse(base)
+    origin = f"{pu.scheme}://{pu.netloc}/"
+    # in crawl mode we scope by the URL's path; list/sitemap modes audit all given URLs
+    scope_path = pu.path if (mode == "url" and pu.path and pu.path != "/") else None
+
     job_id = uuid.uuid4().hex[:12]
     JOBS[job_id] = {
         "phase": "starting", "crawled": 0, "found": 0, "current": "",
         "done": False, "error": None, "stop_flag": threading.Event(),
     }
-    # derive GSC property (origin) and path filter from the URL entered, so GSC
-    # data matches whatever site/section the user crawls (not a hardcoded /in/).
-    from urllib.parse import urlparse
-    pu = urlparse(start_url)
-    origin = f"{pu.scheme}://{pu.netloc}/"
-    scope_path = pu.path if pu.path and pu.path != "/" else None
     params = {
-        "start_url": start_url,
+        "mode": mode,
+        "start_url": base if mode == "url" else origin,
+        "url_list": url_list,
+        "sitemap_url": sitemap_url,
         "max_pages": max_pages,
-        "workers": int(data.get("workers", 8)),
+        "workers": int(data.get("workers", 12)),
         "include_gsc": bool(data.get("include_gsc")),
-        "gsc_property": data.get("gsc_property") or origin,
-        "path_filter": data.get("path_filter") or scope_path,
+        "gsc_property": origin,
+        "path_filter": scope_path,
     }
     t = threading.Thread(target=run_job, args=(job_id, params), daemon=True)
     t.start()

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Link Analysis — SEO Migration Toolkit</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .back{font-size:13px;color:var(--brand);text-decoration:none;font-weight:600}
+  .back:hover{text-decoration:underline}
+  h1{font-size:20px;margin:12px 0 4px;word-break:break-all}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card h2{font-size:13px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .summ{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .summ .b{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+  .summ .b b{display:block;font-size:22px}.summ .b small{color:var(--muted);font-size:11px}
+  .summ .b.bad b{color:var(--red)}
+  .explain{font-size:13px;color:var(--ink)}
+  .explain .row{padding:9px 0;border-bottom:1px solid var(--line);display:flex;gap:10px}
+  .explain .row:last-child{border-bottom:none}
+  .tag{font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:5px;white-space:nowrap;height:fit-content}
+  .t-broken{background:var(--red);color:#fff}
+  .t-internal-nofollow{background:var(--amber);color:#241800}
+  .t-external-dofollow{background:var(--brand);color:#fff}
+  .t-unsafe-blank{background:var(--grey);color:#fff}
+  .t-ok{background:rgba(31,157,107,.16);color:var(--green)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .filters button{font-size:12.5px;padding:7px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
+  .filters button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .tbl th{text-align:left;color:var(--muted);font-weight:700;padding:8px 8px;border-bottom:2px solid var(--line);position:sticky;top:0;background:var(--card)}
+  .tbl td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tbl tr[data-issue]:not([data-issue=""]) {background:rgba(214,69,80,.04)}
+  .scope-int{color:var(--brand);font-weight:600}.scope-ext{color:var(--amber);font-weight:600}
+  .href{word-break:break-all;max-width:360px}
+  .anchor{color:var(--muted);max-width:200px}
+  .mono{font-family:ui-monospace,monospace}
+  .rcount{font-size:12px;color:var(--muted);margin-left:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink" href="/meta">Meta &amp; Canonical</a>
+    <a class="navlink" href="/checklist">Checklist</a>
+    <a class="navlink" href="/settings">Settings</a>
+  </nav>
+
+{% if not_found %}
+  <a class="back" href="/">← Back to Site Audit</a>
+  <div class="card" style="margin-top:14px"><h2>Not available</h2>
+    <p>This page's link data is no longer in memory (server may have restarted). Re-run the audit and open the URL again.</p>
+    <p style="color:var(--muted);word-break:break-all">{{ url }}</p></div>
+{% else %}
+  <a class="back" href="/page?job={{ job_id }}&url={{ page.url|urlencode }}">← Back to page audit</a>
+  <h1>Link analysis</h1>
+  <div class="sub">Every link found on <b>{{ page.url }}</b> — where it points, its follow/target attributes, live status, and why it's flagged.</div>
+
+  {% set ls = page.link_summary or {} %}
+  <div class="card">
+    <h2>Summary</h2>
+    <div class="summ">
+      <div class="b"><b>{{ ls.total or 0 }}</b><small>Total links</small></div>
+      <div class="b"><b>{{ ls.internal or 0 }}</b><small>Internal</small></div>
+      <div class="b"><b>{{ ls.external or 0 }}</b><small>External</small></div>
+      <div class="b {{ 'bad' if page.broken_links else '' }}"><b>{{ page.broken_links or 0 }}</b><small>Broken</small></div>
+      <div class="b {{ 'bad' if ls.internal_nofollow else '' }}"><b>{{ ls.internal_nofollow or 0 }}</b><small>Internal nofollow</small></div>
+      <div class="b {{ 'bad' if ls.external_dofollow else '' }}"><b>{{ ls.external_dofollow or 0 }}</b><small>External dofollow</small></div>
+      <div class="b {{ 'bad' if ls.blank_unsafe else '' }}"><b>{{ ls.blank_unsafe or 0 }}</b><small>Unsafe new-tab</small></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>What each flag means (where it comes from &amp; why it matters)</h2>
+    <div class="explain">
+      <div class="row"><span class="tag t-broken">Broken</span><span><b>Where:</b> a link on this page points to a URL that returned 404/5xx. <b>Why it matters:</b> broken links waste crawl budget, leak link equity into dead ends, and hurt user experience. <b>Fix:</b> update or remove the link, or restore the target.</span></div>
+      <div class="row"><span class="tag t-internal-nofollow">Internal nofollow</span><span><b>Where:</b> a link to your own site carries rel="nofollow". <b>Why it matters:</b> it blocks ranking value from flowing between your own pages. <b>Fix:</b> remove nofollow from internal links.</span></div>
+      <div class="row"><span class="tag t-external-dofollow">External dofollow</span><span><b>Where:</b> an outbound link to another domain with no rel="nofollow/sponsored/ugc". <b>Why it matters:</b> it passes your ranking value out to that site. <b>Fix:</b> add rel="nofollow" unless you deliberately vouch for it.</span></div>
+      <div class="row"><span class="tag t-unsafe-blank">Unsafe new-tab</span><span><b>Where:</b> a link with target="_blank" but no rel="noopener". <b>Why it matters:</b> the opened page can access your window object (security &amp; performance risk). <b>Fix:</b> add rel="noopener".</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <h2 style="margin:0">All links</h2><span class="rcount" id="rcount"></span>
+    </div>
+    <div class="filters">
+      <button data-f="all" class="on">All</button>
+      <button data-f="issues">Issues only</button>
+      <button data-f="broken">Broken</button>
+      <button data-f="internal-nofollow">Internal nofollow</button>
+      <button data-f="external-dofollow">External dofollow</button>
+      <button data-f="unsafe-blank">Unsafe new-tab</button>
+      <button data-f="internal">Internal</button>
+      <button data-f="external">External</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Scope</th><th>Follow</th><th>Target</th><th>Status</th><th>Flag</th><th>Anchor</th><th>Link</th></tr></thead>
+      <tbody id="tb">
+      {% for l in links %}
+        <tr data-issue="{{ l.issue or '' }}" data-scope="{{ 'internal' if l.internal else 'external' }}">
+          <td>{{ loop.index }}</td>
+          <td class="{{ 'scope-int' if l.internal else 'scope-ext' }}">{{ 'internal' if l.internal else 'external' }}</td>
+          <td>{{ 'nofollow' if l.nofollow else 'dofollow' }}{% if l.sponsored %} +sponsored{% endif %}{% if l.ugc %} +ugc{% endif %}</td>
+          <td>{{ '_blank' if l.target_blank else 'same' }}{% if l.target_blank and not l.noopener %} <span class="t-unsafe-blank tag">no noopener</span>{% endif %}</td>
+          <td class="mono">{{ l.status if l.status is not none else '—' }}</td>
+          <td>{% if l.issue %}<span class="tag t-{{ l.issue }}">{{ l.issue.replace('-',' ') }}</span>{% else %}<span class="tag t-ok">ok</span>{% endif %}</td>
+          <td class="anchor">{{ l.anchor or '—' }}</td>
+          <td class="href"><a href="{{ l.href }}" target="_blank" rel="noopener">{{ l.href }}</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+{% endif %}
+</div>
+{% if not not_found %}
+<script>
+  const rows=[...document.querySelectorAll('#tb tr')];
+  const rc=document.getElementById('rcount');
+  function apply(f){
+    let n=0;
+    rows.forEach(r=>{
+      const iss=r.getAttribute('data-issue'), sc=r.getAttribute('data-scope');
+      let show=true;
+      if(f==='all') show=true;
+      else if(f==='issues') show=!!iss;
+      else if(f==='internal'||f==='external') show=sc===f;
+      else show=iss===f;
+      r.style.display=show?'':'none'; if(show)n++;
+    });
+    rc.textContent=n+' of '+rows.length+' links';
+  }
+  document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); apply(b.getAttribute('data-f'));
+  }));
+  apply('all');
+</script>
+{% endif %}
+</body>
+</html>

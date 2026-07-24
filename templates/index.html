@@ -32,6 +32,10 @@
     border:1px solid var(--line);color:var(--ink);border-radius:10px;
     padding:11px 13px;font-size:14px;outline:none}
   input:focus{border-color:var(--brand)}
+  .modesel,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
+  .modesel:focus,textarea:focus{border-color:var(--brand)}
+  input[type=file]{font-size:13px;color:var(--muted);padding:8px 0}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
   .row3{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .full{grid-column:1/-1}
@@ -138,6 +142,7 @@
   <nav class="topnav">
     <span class="brand">SEO Migration Toolkit</span>
     <a class="navlink active" href="/">Site Audit</a>
+    <a class="navlink" href="/meta">Meta &amp; Canonical</a>
     <a class="navlink" href="/checklist">Migration Checklist</a>
     <a class="navlink" href="/settings">Settings</a>
   </nav>
@@ -151,9 +156,41 @@
     <h2>Configuration</h2>
     <div class="row">
       <div class="full">
+        <label>Input source</label>
+        <select id="input_mode" class="modesel">
+          <option value="url">URL — crawl the site by following links</option>
+          <option value="sitemap">XML sitemap — audit every URL in a sitemap</option>
+          <option value="csv">CSV upload — audit a list of URLs from a file</option>
+          <option value="paste">Paste URLs — audit a pasted list</option>
+        </select>
+      </div>
+    </div>
+    <div class="row in-src" id="in_url">
+      <div class="full">
         <label>Start URL (crawl scope)</label>
-        <input type="text" id="start_url" value="https://www.invensislearning.com/in/">
-        <div class="hint">Only URLs under this path are crawled (e.g. the /in/ section).</div>
+        <input type="text" id="start_url" value="https://www.invensislearning.com/">
+        <div class="hint">Only URLs under this path are crawled. Use the root to crawl the whole site.</div>
+      </div>
+    </div>
+    <div class="row in-src" id="in_sitemap" style="display:none">
+      <div class="full">
+        <label>Sitemap URL</label>
+        <input type="text" id="sitemap_url" placeholder="https://www.invensislearning.com/sitemap.xml">
+        <div class="hint">Every URL in the sitemap (and any child sitemaps) is audited — no crawling.</div>
+      </div>
+    </div>
+    <div class="row in-src" id="in_csv" style="display:none">
+      <div class="full">
+        <label>CSV / text file of URLs</label>
+        <input type="file" id="csv_file" accept=".csv,.txt">
+        <div class="hint" id="csv_info">One URL per row (or a column containing URLs). Parsed in your browser.</div>
+      </div>
+    </div>
+    <div class="row in-src" id="in_paste" style="display:none">
+      <div class="full">
+        <label>Paste URLs (one per line)</label>
+        <textarea id="paste_urls" rows="6" placeholder="https://www.invensislearning.com/blog/...
+https://www.invensislearning.com/pmp-certification-training/"></textarea>
       </div>
     </div>
     <div class="row">
@@ -245,16 +282,45 @@
 const $ = id => document.getElementById(id);
 let jobId = null, poll = null;
 
+// ---- input source switching + CSV parsing ----
+let csvUrls = [];
+$("input_mode").addEventListener("change", () => {
+  const m = $("input_mode").value;
+  document.querySelectorAll(".in-src").forEach(el => el.style.display = "none");
+  $("in_" + m).style.display = "";
+});
+function extractUrls(text){
+  // pull every http(s) URL out of the text (handles CSV, TSV, or plain lists)
+  const found = text.match(/https?:\/\/[^\s,"'<>]+/g) || [];
+  return [...new Set(found.map(u => u.replace(/[)>\].,;]+$/, "")))];
+}
+$("csv_file").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    csvUrls = extractUrls(reader.result);
+    $("csv_info").textContent = csvUrls.length + " URL(s) found in " + f.name;
+  };
+  reader.readAsText(f);
+});
+
 $("runBtn").onclick = async () => {
   $("cfgErr").style.display = "none";
+  const mode = $("input_mode").value;
   const body = {
-    start_url: $("start_url").value,
+    input_mode: mode,
     max_pages: $("max_pages").value,
     workers: $("workers").value,
     include_gsc: $("include_gsc").checked,
-    gsc_property: "https://www.invensislearning.com/",
-    path_filter: "/in/",
   };
+  if(mode === "url"){ body.start_url = $("start_url").value; }
+  else if(mode === "sitemap"){ body.sitemap_url = $("sitemap_url").value; }
+  else if(mode === "csv"){
+    if(!csvUrls.length){ $("cfgErr").textContent = "Upload a CSV/text file with URLs first."; $("cfgErr").style.display="block"; return; }
+    body.url_list = csvUrls;
+  }
+  else if(mode === "paste"){ body.url_list = extractUrls($("paste_urls").value); }
   const r = await fetch("/api/start", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const j = await r.json();
   if (j.error){ $("cfgErr").textContent = j.error; $("cfgErr").style.display="block"; return; }
@@ -273,8 +339,8 @@ $("stopBtn").onclick = async () => {
   if(jobId) await fetch("/api/stop/"+jobId,{method:"POST"});
 };
 
-const PHASES = {starting:"Starting…",crawling:"Crawling pages…",auditing:"Auditing on-page SEO…",
-  gsc:"Fetching Search Console data…",report:"Building Excel report…",
+const PHASES = {starting:"Starting…",sitemap:"Reading sitemap…",crawling:"Fetching & auditing pages…",
+  auditing:"Auditing on-page SEO…",gsc:"Fetching Search Console data…",report:"Building report…",
   complete:"Audit complete ✓",stopped:"Stopped",error:"Error"};
 
 async function tick(){

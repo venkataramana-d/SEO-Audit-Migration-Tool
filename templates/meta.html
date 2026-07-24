@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meta &amp; Canonical Audit — SEO Migration Toolkit</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:26px 20px 80px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  h1{font-size:24px;margin:0 0 4px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 22px;max-width:70ch}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card h2{font-size:13px;margin:0 0 16px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  input[type=text],input[type=number],select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+  input[type=file]{background:none;border:none;padding:8px 0;font-size:13px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .full{grid-column:1/-1}
+  .hint{font-size:12px;color:var(--grey);margin-top:5px}
+  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;border-radius:11px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer}
+  .btn:disabled{opacity:.5}
+  .check{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;font-size:13px}
+  .check input{width:18px;height:18px;accent-color:var(--brand)}
+  .err{background:rgba(214,69,80,.1);border:1px solid var(--red);color:#b23;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
+  #panel{display:none}
+  .phase{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .bar{height:8px;background:var(--card2);border-radius:8px;overflow:hidden;margin-bottom:14px}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--green));transition:width .3s}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .filters input[type=text]{flex:1;min-width:160px}
+  .filters button{font-size:12.5px;padding:8px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
+  .filters button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .rcount{font-size:12px;color:var(--muted);margin-left:auto}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .tbl th{text-align:left;color:var(--muted);font-weight:700;padding:9px 8px;border-bottom:2px solid var(--line)}
+  .tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tbl tr:hover{background:var(--card2)}
+  .cc{font-weight:700;font-variant-numeric:tabular-nums}.cc.warn{color:var(--amber)}.cc.ok{color:var(--green)}
+  .type{font-size:10px;font-weight:800;text-transform:uppercase;padding:2px 7px;border-radius:5px}
+  .type.course{background:rgba(58,107,255,.14);color:var(--brand)}
+  .type.blog{background:rgba(31,157,107,.14);color:var(--green)}
+  .type.page{background:var(--card2);color:var(--muted)}
+  .canon{font-weight:700}.canon.ok{color:var(--green)}.canon.mismatch{color:var(--amber)}.canon.missing{color:var(--red)}
+  .name{font-weight:600;max-width:320px}
+  .path{color:var(--muted);font-size:11px;max-width:320px;word-break:break-all}
+  .iss{color:var(--red);font-weight:700}.iss.zero{color:var(--green)}
+  a.rowlink{color:var(--brand);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink active" href="/meta">Meta &amp; Canonical</a>
+    <a class="navlink" href="/checklist">Checklist</a>
+    <a class="navlink" href="/settings">Settings</a>
+  </nav>
+
+  <h1>Meta &amp; Canonical Audit</h1>
+  <p class="lede">Focused audit of page names (titles), meta descriptions, character limits and canonical tags — for courses, blogs and any URL list. Feed it a crawl, a sitemap, a CSV, or a pasted list.</p>
+
+  <div class="card">
+    <h2>Input</h2>
+    <div class="row">
+      <div class="full">
+        <label>Input source</label>
+        <select id="input_mode">
+          <option value="url">URL — crawl the site by following links</option>
+          <option value="sitemap">XML sitemap — audit every URL in a sitemap</option>
+          <option value="csv">CSV upload — audit a list of URLs from a file</option>
+          <option value="paste">Paste URLs — audit a pasted list</option>
+        </select>
+      </div>
+    </div>
+    <div class="row in-src" id="in_url"><div class="full"><label>Start URL</label>
+      <input type="text" id="start_url" value="https://www.invensislearning.com/">
+      <div class="hint">Use the root to crawl everything, or a section path to scope it.</div></div></div>
+    <div class="row in-src" id="in_sitemap" style="display:none"><div class="full"><label>Sitemap URL</label>
+      <input type="text" id="sitemap_url" placeholder="https://www.invensislearning.com/sitemap.xml"></div></div>
+    <div class="row in-src" id="in_csv" style="display:none"><div class="full"><label>CSV / text file of URLs</label>
+      <input type="file" id="csv_file" accept=".csv,.txt"><div class="hint" id="csv_info">One URL per row. Parsed in your browser.</div></div></div>
+    <div class="row in-src" id="in_paste" style="display:none"><div class="full"><label>Paste URLs (one per line)</label>
+      <textarea id="paste_urls" rows="6" placeholder="https://www.invensislearning.com/blog/..."></textarea></div></div>
+    <div class="row">
+      <div><label>Max URLs (up to 15000)</label><input type="number" id="max_pages" value="200" min="1" max="15000"></div>
+      <div><label>&nbsp;</label><button class="btn" id="runBtn">Run Meta Audit</button></div>
+    </div>
+    <div class="err" id="cfgErr"></div>
+  </div>
+
+  <div class="card" id="panel">
+    <div class="phase" id="phaseTxt">Starting…</div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div id="results" style="display:none">
+      <div class="filters">
+        <input type="text" id="fSearch" placeholder="Search name or URL…">
+        <button data-f="all" class="on">All</button>
+        <button data-f="course">Courses</button>
+        <button data-f="blog">Blogs</button>
+        <button data-f="title">Title issues</button>
+        <button data-f="desc">Desc issues</button>
+        <button data-f="canon">Canonical issues</button>
+        <span class="rcount" id="rCount"></span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Type</th><th>Name (title) &amp; URL</th><th>Title</th><th>Desc</th><th>Canonical</th><th>Issues</th><th></th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let jobId=null, poll=null, PAGES=[], ISSUES={};
+
+// input mode switching + csv parsing
+let csvUrls=[];
+$("input_mode").addEventListener("change",()=>{const m=$("input_mode").value;
+  document.querySelectorAll(".in-src").forEach(e=>e.style.display="none");$("in_"+m).style.display="";});
+function extractUrls(t){const f=t.match(/https?:\/\/[^\s,"'<>]+/g)||[];return[...new Set(f.map(u=>u.replace(/[)>\].,;]+$/,"")))];}
+$("csv_file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{csvUrls=extractUrls(r.result);$("csv_info").textContent=csvUrls.length+" URL(s) found in "+f.name;};r.readAsText(f);});
+
+function typeOf(u){u=u.toLowerCase();
+  if(u.includes('/blog/')||u.includes('/info/')||u.includes('/article')) return 'blog';
+  if(u.includes('training')||u.includes('certification')||u.includes('/course')||u.includes('-course')) return 'course';
+  return 'page';}
+
+$("runBtn").onclick=async()=>{
+  $("cfgErr").style.display="none";
+  const mode=$("input_mode").value;
+  const body={input_mode:mode,max_pages:$("max_pages").value,workers:12,include_gsc:false};
+  if(mode==="url")body.start_url=$("start_url").value;
+  else if(mode==="sitemap")body.sitemap_url=$("sitemap_url").value;
+  else if(mode==="csv"){if(!csvUrls.length){$("cfgErr").textContent="Upload a file with URLs first.";$("cfgErr").style.display="block";return;}body.url_list=csvUrls;}
+  else if(mode==="paste")body.url_list=extractUrls($("paste_urls").value);
+  const r=await fetch("/api/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.error){$("cfgErr").textContent=j.error;$("cfgErr").style.display="block";return;}
+  jobId=j.job_id;$("runBtn").disabled=true;$("panel").style.display="block";$("results").style.display="none";
+  poll=setInterval(tick,800);
+};
+
+const PH={starting:"Starting…",sitemap:"Reading sitemap…",crawling:"Fetching & auditing…",auditing:"Auditing…",report:"Finishing…",complete:"Complete ✓"};
+async function tick(){
+  const p=await(await fetch("/api/progress/"+jobId)).json();
+  $("phaseTxt").textContent=(PH[p.phase]||p.phase)+(p.crawled?" ("+p.crawled+")":"");
+  $("barFill").style.width=(p.done?100:Math.min(95,(p.crawled||0)))+"%";
+  if(p.error){$("phaseTxt").textContent="Error: "+p.error;}
+  if(p.done){clearInterval(poll);$("runBtn").disabled=false;await load();}
+}
+async function load(){
+  const d=await(await fetch("/api/results/"+jobId)).json();
+  PAGES=d.pages||[];ISSUES=d.issues_by_url||{};
+  $("results").style.display="block";render();
+}
+
+function render(){
+  const q=$("fSearch").value.toLowerCase().trim();
+  let list=PAGES.filter(p=>{
+    const t=typeOf(p.url);
+    if(FILT==="course"&&t!=="course")return false;
+    if(FILT==="blog"&&t!=="blog")return false;
+    if(FILT==="title"&&!(p.title_len<30||p.title_len>60||!p.title_len))return false;
+    if(FILT==="desc"&&!(p.meta_desc_len<70||p.meta_desc_len>160||!p.meta_desc_len))return false;
+    if(FILT==="canon"&&p.canonical_status==="ok")return false;
+    if(q&&!((p.url||"").toLowerCase().includes(q)||(p.title||"").toLowerCase().includes(q)))return false;
+    return true;
+  });
+  $("rCount").textContent=list.length+" of "+PAGES.length+" URLs";
+  $("tb").innerHTML=list.map((p,i)=>{
+    const t=typeOf(p.url);
+    const tcls=(p.title_len>=30&&p.title_len<=60)?"cc ok":"cc warn";
+    const dcls=(p.meta_desc_len>=70&&p.meta_desc_len<=160)?"cc ok":"cc warn";
+    const cs=p.canonical_status||"missing";
+    const canonTxt=cs==="ok"?"✓ match":(cs==="mismatch"?"≠ differs":"✗ missing");
+    let path=p.url;try{const u=new URL(p.url);path=u.pathname;}catch(e){}
+    const href="/page?job="+encodeURIComponent(jobId)+"&url="+encodeURIComponent(p.url);
+    return '<tr>'
+      +'<td>'+(i+1)+'</td>'
+      +'<td><span class="type '+t+'">'+t+'</span></td>'
+      +'<td><div class="name">'+esc(p.title||"— no title —")+'</div><div class="path">'+esc(path)+'</div></td>'
+      +'<td><span class="'+tcls+'">'+p.title_len+'</span> ch</td>'
+      +'<td><span class="'+dcls+'">'+p.meta_desc_len+'</span> ch</td>'
+      +'<td class="canon '+cs+'">'+canonTxt+'</td>'
+      +'<td class="iss'+(p.issue_count?'':' zero')+'">'+p.issue_count+'</td>'
+      +'<td><a class="rowlink" href="'+href+'">view →</a></td></tr>';
+  }).join("")||'<tr><td colspan="8" style="color:var(--muted);padding:20px">No URLs match.</td></tr>';
+}
+function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+let FILT="all";
+document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');FILT=b.getAttribute('data-f');render();}));
+$("fSearch").addEventListener('input',render);
+</script>
+</body>
+</html>

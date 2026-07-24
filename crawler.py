@@ -200,13 +200,57 @@ def extract_page(url, resp, soup):
     }
 
 
+def collect_sitemap_urls(sitemap_url, max_urls=15000):
+    """Fetch a sitemap (or sitemap index) and return all page URLs it declares.
+    Recurses into child sitemaps and fetches each level in parallel."""
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    adapter = HTTPAdapter(pool_connections=48, pool_maxsize=48)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+
+    def fetch(u):
+        try:
+            r = session.get(u.strip(), timeout=TIMEOUT)
+            if r.status_code != 200 or not r.text:
+                return [], []
+            locs = [l.strip() for l in re.findall(r"<loc>\s*(.*?)\s*</loc>", r.text, re.I)]
+            if "<sitemapindex" in r.text.lower():
+                return locs, []
+            return [], [normalize(l) for l in locs]
+        except Exception:
+            return [], []
+
+    to_visit = [sitemap_url.strip()]
+    seen_sm = set(to_visit)
+    urls = set()
+    depth = 0
+    while to_visit and depth < 6 and len(urls) < max_urls:
+        with ThreadPoolExecutor(max_workers=min(32, len(to_visit))) as ex:
+            results = list(ex.map(fetch, to_visit))
+        nxt = []
+        for children, pages in results:
+            urls.update(pages)
+            for c in children:
+                if c not in seen_sm:
+                    seen_sm.add(c)
+                    nxt.append(c)
+        to_visit = nxt
+        depth += 1
+    return sorted(urls)[:max_urls]
+
+
 class Crawler:
     def __init__(self, start_url, max_pages=1000, workers=12, delay=0.03,
-                 progress_cb=None, stop_flag=None):
+                 progress_cb=None, stop_flag=None, url_list=None, follow_links=True):
         self.start_url = normalize(start_url)
         p = urlparse(self.start_url)
         self.domain = p.netloc
         self.prefix = p.path if p.path else "/"
+        # url_list mode: audit exactly these URLs (from a sitemap / CSV / paste),
+        # no link-following, no sitemap discovery
+        self.url_list = [normalize(u) for u in url_list] if url_list else None
+        self.follow_links = follow_links and not self.url_list
         self.max_pages = max_pages
         self.workers = workers
         self.delay = delay
@@ -317,21 +361,16 @@ class Crawler:
         return scoped
 
     def run(self):
-        queue = deque([self.start_url])
-        self.seen.add(self.start_url)
         qlock = threading.Lock()
-
-        # Discover the sitemap in the BACKGROUND so crawling can start instantly
-        # instead of waiting ~25s for a 100+ child-sitemap tree. In-scope sitemap
-        # URLs are merged into the queue as they're found.
-        def _sitemap_worker():
-            for u in self._seed_from_sitemap():
-                with qlock:
-                    if u not in self.seen:
-                        self.seen.add(u)
-                        queue.append(u)
-        sm_thread = threading.Thread(target=_sitemap_worker, daemon=True)
-        sm_thread.start()
+        if self.url_list:
+            # audit exactly the provided URLs (sitemap / CSV / paste) — no crawling
+            queue = deque(self.url_list)
+            self.seen.update(self.url_list)
+        else:
+            # crawl mode: start from the URL and follow in-scope links (no sitemap
+            # fetch — that kept the crawl waiting; sitemap is now a separate input mode)
+            queue = deque([self.start_url])
+            self.seen.add(self.start_url)
 
         self.progress_cb(phase="crawling", crawled=0, found=len(self.seen))
 
@@ -340,7 +379,6 @@ class Crawler:
             while len(self.results) < self.max_pages:
                 if self.stop_flag.is_set():
                     break
-                # top up the pool from the queue
                 with qlock:
                     while queue and len(futures) < self.workers and \
                             len(self.results) + len(futures) < self.max_pages:
@@ -352,10 +390,6 @@ class Crawler:
                     time.sleep(self.delay)
 
                 if not futures:
-                    # queue is momentarily empty — wait if sitemap is still loading
-                    if sm_thread.is_alive():
-                        time.sleep(0.1)
-                        continue
                     break
 
                 done_future = next(as_completed(list(futures)))
@@ -365,13 +399,13 @@ class Crawler:
                 with self.lock:
                     self.results.append(data)
 
-                # enqueue new internal links within scope
-                for link in data.get("internal_links", []):
-                    if same_scope(link, self.domain, self.prefix):
-                        with qlock:
-                            if link not in self.seen:
-                                self.seen.add(link)
-                                queue.append(link)
+                if self.follow_links:
+                    for link in data.get("internal_links", []):
+                        if same_scope(link, self.domain, self.prefix):
+                            with qlock:
+                                if link not in self.seen:
+                                    self.seen.add(link)
+                                    queue.append(link)
 
                 self.progress_cb(
                     phase="crawling",
@@ -379,10 +413,6 @@ class Crawler:
                     found=len(self.seen),
                     current=url,
                 )
-
-        # give the background sitemap a moment to finish for the total count,
-        # but don't block the whole run waiting on a huge sitemap tree
-        sm_thread.join(timeout=3)
 
         # build a status map for broken-link detection
         status_map = {normalize(r["url"]): r.get("status", 0) for r in self.results}

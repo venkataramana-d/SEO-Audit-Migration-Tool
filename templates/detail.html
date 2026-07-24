@@ -77,6 +77,7 @@
   <nav class="topnav">
     <span class="brand">SEO Migration Toolkit</span>
     <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink" href="/meta">Meta &amp; Canonical</a>
     <a class="navlink" href="/checklist">Migration Checklist</a>
     <a class="navlink" href="/settings">Settings</a>
   </nav>
@@ -205,7 +206,11 @@
   </div>
 
   <div class="card">
-    <h2>Link analysis</h2>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 style="margin:0 0 14px">Link analysis</h2>
+      <a style="margin:0 0 14px auto;font-size:13px;color:var(--brand);font-weight:600;text-decoration:none"
+         href="/page/links?job={{ job_id }}&url={{ page.url|urlencode }}">View full link analysis →</a>
+    </div>
     {% set ls = page.link_summary or {} %}
     <table>
       <tr><td class="k">Total links</td><td class="v">{{ ls.total or 0 }}</td></tr>
