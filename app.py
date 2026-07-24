@@ -120,18 +120,20 @@ def run_job(job_id, params):
         if params.get("include_gsc"):
             job["phase"] = "gsc"
             try:
-                for days, target in ((90, "90"), (365, "365")):
-                    rows = gsc.top_pages(
-                        site_url=params["gsc_property"],
-                        client_file=CLIENT_FILE,
-                        token_file=TOKEN_FILE,
-                        days=days,
-                        path_filter=params.get("path_filter"),
-                    )
-                    if target == "90":
-                        gsc_map_90 = _to_map(rows)
-                    else:
-                        gsc_map_365 = _to_map(rows)
+                from concurrent.futures import ThreadPoolExecutor
+
+                def _pull(days):
+                    return gsc.top_pages(
+                        site_url=params["gsc_property"], client_file=CLIENT_FILE,
+                        token_file=TOKEN_FILE, days=days,
+                        path_filter=params.get("path_filter"))
+
+                # fetch the 3-month and 12-month windows concurrently (was ~8s serial)
+                with ThreadPoolExecutor(max_workers=2) as gex:
+                    f90 = gex.submit(_pull, 90)
+                    f365 = gex.submit(_pull, 365)
+                    gsc_map_90 = _to_map(f90.result())
+                    gsc_map_365 = _to_map(f365.result())
             except Exception as e:
                 job["gsc_error"] = str(e)[:300]
         job["gsc_map"] = gsc_map_90          # 3-month is the default (used by Excel too)

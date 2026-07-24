@@ -16,7 +16,7 @@ from urllib.request import urlopen
 
 import requests
 from requests.adapters import HTTPAdapter
-from bs4 import BeautifulSoup
+import lxml.html
 
 USER_AGENT = "Mozilla/5.0 (compatible; SEO-Audit-Tool/1.0; pre-migration audit)"
 HEADERS = {"User-Agent": USER_AGENT}
@@ -39,103 +39,105 @@ def same_scope(url, domain, prefix):
     return p.path.startswith(prefix)
 
 
-def _text_len(soup):
-    for tag in soup(["script", "style", "noscript", "template"]):
-        tag.decompose()
-    text = soup.get_text(separator=" ", strip=True)
-    return len(re.findall(r"\b\w+\b", text))
+def extract_page(url, resp):
+    """Pull every SEO-relevant element from a fetched page into a dict.
+    Uses raw lxml (much faster than BeautifulSoup for the parse + traversal)."""
+    try:
+        doc = lxml.html.fromstring(resp.text)
+    except Exception:
+        return {"url": url, "final_url": str(resp.url), "status": resp.status_code,
+                "content_type": resp.headers.get("Content-Type", ""),
+                "error": "HTML parse failed"}
 
+    self_host = urlparse(url).netloc.lower().replace("www.", "")
 
-def extract_page(url, resp, soup):
-    """Pull every SEO-relevant element from a fetched page into a dict."""
-    def attr(sel, name, **kw):
-        el = soup.find(sel, **kw)
-        return el.get(name, "").strip() if el else ""
+    # title (+ duplicate count)
+    titles = doc.xpath("//title")
+    title = titles[0].text_content().strip() if titles else ""
+    title_count = len(titles)
 
-    title_el = soup.find("title")
-    title = title_el.get_text(strip=True) if title_el else ""
+    # meta tags — single pass
+    meta_desc = robots = ""
+    desc_count = 0
+    viewport = twitter_card = meta_keywords = False
+    og = {}
+    for m in doc.xpath("//meta"):
+        name = (m.get("name") or "").strip().lower()
+        content = (m.get("content") or "").strip()
+        if name == "description":
+            if not meta_desc:
+                meta_desc = content
+            desc_count += 1
+        elif name == "robots":
+            robots = content.lower()
+        elif name == "viewport":
+            viewport = True
+        elif name == "twitter:card":
+            twitter_card = True
+        elif name == "keywords":
+            meta_keywords = True
+        prop = (m.get("property") or "").strip().lower()
+        if prop.startswith("og:"):
+            og[prop] = content
 
-    meta_desc = ""
-    md = soup.find("meta", attrs={"name": re.compile("^description$", re.I)})
-    if md:
-        meta_desc = (md.get("content") or "").strip()
-
-    robots = ""
-    mr = soup.find("meta", attrs={"name": re.compile("^robots$", re.I)})
-    if mr:
-        robots = (mr.get("content") or "").strip().lower()
-
+    # link tags — canonical (+ count) and hreflang
     canonical = ""
-    cl = soup.find("link", attrs={"rel": re.compile("canonical", re.I)})
-    if cl:
-        canonical = (cl.get("href") or "").strip()
+    canonical_count = 0
+    hreflangs = []
+    for l in doc.xpath("//link"):
+        rel = (l.get("rel") or "").lower()
+        if "canonical" in rel:
+            if not canonical:
+                canonical = (l.get("href") or "").strip()
+            canonical_count += 1
+        if "alternate" in rel and l.get("hreflang"):
+            hreflangs.append((l.get("hreflang"), l.get("href") or ""))
 
-    viewport = bool(soup.find("meta", attrs={"name": re.compile("^viewport$", re.I)}))
-    lang = (soup.find("html").get("lang", "").strip() if soup.find("html") else "")
+    htmls = doc.xpath("//html")
+    lang = (htmls[0].get("lang") or "").strip() if htmls else ""
 
-    h1s = [h.get_text(strip=True) for h in soup.find_all("h1")]
-    h2s = [h.get_text(strip=True) for h in soup.find_all("h2")]
+    # headings in document order
+    h1s, h2s, heading_seq = [], [], []
+    for h in doc.xpath("//h1|//h2|//h3|//h4|//h5|//h6"):
+        lvl = int(h.tag[1])
+        heading_seq.append(lvl)
+        if lvl == 1:
+            h1s.append(h.text_content().strip())
+        elif lvl == 2:
+            h2s.append(h.text_content().strip())
 
-    imgs = soup.find_all("img")
-    imgs_missing_alt = [
-        (img.get("src") or "")
-        for img in imgs
-        if not (img.get("alt") or "").strip()
-    ]
+    imgs = doc.xpath("//img")
+    imgs_missing_alt = [i for i in imgs if not (i.get("alt") or "").strip()]
 
-    # structured data
+    # structured data (JSON-LD types) — before we strip scripts for word count
     ld_types = []
-    for s in soup.find_all("script", attrs={"type": re.compile("ld\\+json", re.I)}):
-        txt = s.string or ""
-        ld_types += re.findall(r'"@type"\s*:\s*"([^"]+)"', txt)
-
-    hreflangs = [
-        (l.get("hreflang", ""), l.get("href", ""))
-        for l in soup.find_all("link", attrs={"rel": re.compile("alternate", re.I)})
-        if l.get("hreflang")
-    ]
-
-    og = {
-        m.get("property", ""): (m.get("content") or "")
-        for m in soup.find_all("meta", attrs={"property": re.compile("^og:", re.I)})
-    }
-    twitter_card = bool(soup.find("meta", attrs={"name": re.compile("^twitter:card$", re.I)}))
-    meta_keywords = bool(soup.find("meta", attrs={"name": re.compile("^keywords$", re.I)}))
-
-    # duplicate-tag detection (multiple titles / canonicals / descriptions)
-    title_count = len(soup.find_all("title"))
-    canonical_count = len(soup.find_all("link", attrs={"rel": re.compile("canonical", re.I)}))
-    desc_count = len(soup.find_all("meta", attrs={"name": re.compile("^description$", re.I)}))
-
-    # heading order (list of levels in document order, e.g. [1,2,2,3])
-    heading_seq = [int(h.name[1]) for h in soup.find_all(re.compile("^h[1-6]$"))]
+    for s in doc.xpath("//script"):
+        if "ld+json" in (s.get("type") or "").lower():
+            ld_types += re.findall(r'"@type"\s*:\s*"([^"]+)"', s.text_content() or "")
 
     # HTTPS + mixed content
     is_https = url.lower().startswith("https")
     mixed_content = 0
     if is_https:
-        for tag, attr in (("img", "src"), ("script", "src"), ("link", "href")):
-            for el in soup.find_all(tag):
-                if (el.get(attr) or "").strip().lower().startswith("http://"):
-                    mixed_content += 1
+        for el in doc.xpath("//img[@src]|//script[@src]|//link[@href]"):
+            v = (el.get("src") or el.get("href") or "").strip().lower()
+            if v.startswith("http://"):
+                mixed_content += 1
 
     # links — capture rel/target for full link analysis
     links = []
     internal, external = [], []
-    base = url
-    self_host = urlparse(url).netloc.lower().replace("www.", "")
-    for a in soup.find_all("a", href=True):
-        href = normalize(urljoin(base, a["href"]))
+    for a in doc.xpath("//a[@href]"):
+        href = normalize(urljoin(url, a.get("href")))
         if not href.startswith("http"):
             continue
-        rel_str = " ".join(a.get("rel") or []).lower()
+        rel_str = (a.get("rel") or "").lower()
         target = (a.get("target") or "").lower()
         host = urlparse(href).netloc.lower().replace("www.", "")
         is_internal = host == self_host
-        anchor = a.get_text(strip=True)[:80]
         links.append({
             "href": href,
-            "anchor": anchor,
+            "anchor": a.text_content().strip()[:80],
             "internal": is_internal,
             "nofollow": "nofollow" in rel_str,
             "sponsored": "sponsored" in rel_str,
@@ -145,9 +147,10 @@ def extract_page(url, resp, soup):
         })
         (internal if is_internal else external).append(href)
 
-    # word count — compute on the existing soup (extraction is done, so it's safe
-    # to strip script/style here rather than re-parsing the whole document again)
-    word_count = _text_len(soup)
+    # word count — drop non-content nodes then count words in visible text
+    for bad in doc.xpath("//script|//style|//noscript|//template"):
+        bad.drop_tree()
+    word_count = len(re.findall(r"\w+", doc.text_content() or ""))
 
     link_summary = {
         "total": len(links),
@@ -301,8 +304,7 @@ class Crawler:
             if "html" not in ctype.lower():
                 return {"url": url, "final_url": str(resp.url), "status": resp.status_code,
                         "content_type": ctype, "non_html": True}
-            soup = BeautifulSoup(resp.text, "lxml")
-            return extract_page(url, resp, soup)
+            return extract_page(url, resp)
         except requests.RequestException as e:
             return {"url": url, "status": 0, "error": str(e)[:200]}
 
