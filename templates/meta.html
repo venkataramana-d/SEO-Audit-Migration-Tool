@@ -146,7 +146,7 @@ function typeOf(u){u=u.toLowerCase();
 $("runBtn").onclick=async()=>{
   $("cfgErr").style.display="none";
   const mode=$("input_mode").value;
-  const body={input_mode:mode,max_pages:$("max_pages").value,workers:12,include_gsc:false};
+  const body={input_mode:mode,max_pages:$("max_pages").value,workers:16,include_gsc:false};
   if(mode==="url")body.start_url=$("start_url").value;
   else if(mode==="sitemap")body.sitemap_url=$("sitemap_url").value;
   else if(mode==="csv"){if(!csvUrls.length){$("cfgErr").textContent="Upload a file with URLs first.";$("cfgErr").style.display="block";return;}body.url_list=csvUrls;}
@@ -167,10 +167,23 @@ async function tick(){
   if(p.done){clearInterval(poll);$("runBtn").disabled=false;await load();}
 }
 async function load(){
-  const d=await(await fetch("/api/results/"+jobId)).json();
+  const r=await fetch("/api/results/"+jobId);
+  if(!r.ok){ sessionStorage.removeItem("lastMetaJob"); return; }
+  const d=await r.json();
+  if(!d.pages||!d.pages.length){ return; }
   PAGES=d.pages||[];ISSUES=d.issues_by_url||{};
+  sessionStorage.setItem("lastMetaJob", jobId);   // remember for back navigation
+  $("panel").style.display="block";
+  $("phaseTxt").textContent="Complete ✓";
+  $("barFill").style.width="100%";
   $("results").style.display="block";render();
 }
+
+// restore the last meta audit when returning from a detail page
+(function restoreLastMeta(){
+  const j=sessionStorage.getItem("lastMetaJob");
+  if(j){ jobId=j; load().catch(()=>sessionStorage.removeItem("lastMetaJob")); }
+})();
 
 function render(){
   const q=$("fSearch").value.toLowerCase().trim();

@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 
 USER_AGENT = "Mozilla/5.0 (compatible; SEO-Audit-Tool/1.0; pre-migration audit)"
 HEADERS = {"User-Agent": USER_AGENT}
-TIMEOUT = 20
+TIMEOUT = 12          # fail slow pages faster instead of blocking a worker for 20s
 
 
 def normalize(url):
@@ -241,7 +241,7 @@ def collect_sitemap_urls(sitemap_url, max_urls=15000):
 
 
 class Crawler:
-    def __init__(self, start_url, max_pages=1000, workers=12, delay=0.03,
+    def __init__(self, start_url, max_pages=1000, workers=16, delay=0,
                  progress_cb=None, stop_flag=None, url_list=None, follow_links=True):
         self.start_url = normalize(start_url)
         p = urlparse(self.start_url)
@@ -261,7 +261,7 @@ class Crawler:
         self.session.headers.update(HEADERS)
         # raise the per-host connection pool above the default 10 so concurrent
         # workers aren't throttled to 10 simultaneous requests
-        _adapter = HTTPAdapter(pool_connections=48, pool_maxsize=48)
+        _adapter = HTTPAdapter(pool_connections=64, pool_maxsize=64)
         self.session.mount("https://", _adapter)
         self.session.mount("http://", _adapter)
         self.robots = self._load_robots()

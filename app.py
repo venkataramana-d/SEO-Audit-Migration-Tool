@@ -289,7 +289,7 @@ def start():
         "url_list": url_list,
         "sitemap_url": sitemap_url,
         "max_pages": max_pages,
-        "workers": int(data.get("workers", 12)),
+        "workers": int(data.get("workers", 16)),
         "include_gsc": bool(data.get("include_gsc")),
         "gsc_property": origin,
         "path_filter": scope_path,
