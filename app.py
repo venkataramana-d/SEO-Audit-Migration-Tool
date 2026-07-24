@@ -23,28 +23,34 @@ import report
 import gsc
 import perf
 
-app = Flask(__name__)
+# absolute paths so templates resolve regardless of the working directory
+# (needed when deployed under a WSGI host such as Vercel/gunicorn)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "templates"))
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.jinja_env.auto_reload = True
 
 # in-memory job store: job_id -> state dict
 JOBS = {}
-CLIENT_FILE = "../oauth_client.json"   # created earlier in the parent folder
-TOKEN_FILE = "../token.json"
-SETTINGS_FILE = "settings.json"
+CLIENT_FILE = os.path.join(BASE_DIR, "..", "oauth_client.json")
+TOKEN_FILE = os.path.join(BASE_DIR, "..", "token.json")
+SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
 
 def load_settings():
     try:
         with open(SETTINGS_FILE) as f:
             return json.load(f)
-    except (FileNotFoundError, ValueError):
+    except (FileNotFoundError, ValueError, OSError):
         return {}
 
 
 def save_settings(data):
-    with open(SETTINGS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    try:
+        with open(SETTINGS_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except OSError:
+        pass  # read-only filesystem (e.g. serverless host) — ignore
 
 
 def run_job(job_id, params):
