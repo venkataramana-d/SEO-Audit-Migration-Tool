@@ -22,6 +22,7 @@ import auditor
 import report
 import gsc
 import perf
+import redirects
 
 # absolute paths so templates resolve regardless of the working directory
 # (needed when deployed under a WSGI host such as Vercel/gunicorn)
@@ -396,6 +397,184 @@ def download(job_id):
         bio, as_attachment=True, download_name=fname,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
+
+
+# ------------------------- Redirect Validation -------------------------
+
+def run_redirects(job_id, pairs):
+    job = JOBS[job_id]
+    try:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        stop = job["stop_flag"]
+        job["phase"] = "validating"
+        session = redirects.make_session()
+        results = [None] * len(pairs)
+        done = 0
+        with ThreadPoolExecutor(max_workers=16) as ex:
+            futs = {ex.submit(redirects.validate, p["source"], p.get("expected", ""), session): i
+                    for i, p in enumerate(pairs)}
+            for f in as_completed(futs):
+                if stop.is_set():
+                    break
+                i = futs[f]
+                try:
+                    results[i] = f.result()
+                except Exception as e:
+                    results[i] = {"source": pairs[i]["source"], "expected": pairs[i].get("expected", ""),
+                                  "final_url": pairs[i]["source"], "final_status": 0,
+                                  "redirect_type": None, "hops": 0, "chain": [], "is_chain": False,
+                                  "is_loop": False, "expected_match": None, "canonical": "",
+                                  "canonical_ok": True, "indexable": True, "index_reason": "",
+                                  "is_https": False, "www": {}, "trailing_slash": {}, "lost_params": [],
+                                  "lost_utm": [], "speed_ms": 0, "slow": False,
+                                  "issues": [{"severity": "Critical", "msg": "Validation error: " + str(e)[:120]}],
+                                  "result": "FAIL"}
+                done += 1
+                job.update(phase="validating", crawled=done, found=len(pairs),
+                           current=pairs[i]["source"])
+        results = [r for r in results if r]
+        job["redirect_results"] = results
+        job["redirect_summary"] = redirects.summarize(results)
+        job["phase"] = "complete"
+        job["done"] = True
+    except Exception as e:
+        import traceback
+        job["error"] = str(e)
+        job["traceback"] = traceback.format_exc()
+        job["phase"] = "error"
+        job["done"] = True
+
+
+@app.route("/redirects")
+def redirects_page():
+    return render_template("redirects.html")
+
+
+@app.route("/api/redirects/start", methods=["POST"])
+def redirects_start():
+    data = request.get_json(force=True)
+    raw = data.get("pairs") or []
+    pairs = [{"source": (p.get("source") or "").strip(),
+              "expected": (p.get("expected") or "").strip()}
+             for p in raw if (p.get("source") or "").strip().startswith("http")]
+    if not pairs:
+        return jsonify({"error": "No valid source URLs (must start with http/https)."}), 400
+    pairs = pairs[:15000]
+    job_id = uuid.uuid4().hex[:12]
+    JOBS[job_id] = {"phase": "starting", "crawled": 0, "found": len(pairs),
+                    "current": "", "done": False, "error": None,
+                    "stop_flag": threading.Event()}
+    threading.Thread(target=run_redirects, args=(job_id, pairs), daemon=True).start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/redirects/results/<job_id>")
+def redirects_results(job_id):
+    job = JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "unknown job"}), 404
+    return jsonify({"summary": job.get("redirect_summary"),
+                    "results": job.get("redirect_results", [])})
+
+
+@app.route("/api/redirects/sitemap", methods=["POST"])
+def redirects_sitemap():
+    data = request.get_json(force=True)
+    sm = (data.get("sitemap_url") or "").strip()
+    if not sm.startswith("http"):
+        return jsonify({"error": "Enter a valid sitemap URL."}), 400
+    urls = crawler.collect_sitemap_urls(sm, max_urls=15000)
+    return jsonify({"urls": urls})
+
+
+@app.route("/api/redirects/upload_xlsx", methods=["POST"])
+def redirects_upload_xlsx():
+    f = request.files.get("file")
+    if not f:
+        return jsonify({"error": "No file uploaded."}), 400
+    from openpyxl import load_workbook
+    from io import BytesIO
+    try:
+        wb = load_workbook(BytesIO(f.read()), read_only=True, data_only=True)
+    except Exception as e:
+        return jsonify({"error": "Could not read Excel file: " + str(e)[:120]}), 400
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return jsonify({"pairs": []})
+    # decide header vs data
+    first = rows[0]
+    header_is_data = first and first[0] and str(first[0]).strip().lower().startswith("http")
+    si, ei = 0, 1
+    start = 0
+    if not header_is_data:
+        hdr = {str(c).lower().strip(): i for i, c in enumerate(first or []) if c}
+        def find(*keys):
+            for k in keys:
+                for h, i in hdr.items():
+                    if k in h:
+                        return i
+            return None
+        si = find("source", "url", "from", "old") or 0
+        ei = find("expected", "destination", "landing", "target", "new", "to")
+        start = 1
+    pairs = []
+    for r in rows[start:]:
+        if not r:
+            continue
+        src = str(r[si]).strip() if si < len(r) and r[si] else ""
+        exp = ""
+        if ei is not None and ei < len(r) and r[ei]:
+            exp = str(r[ei]).strip()
+        if src.startswith("http"):
+            pairs.append({"source": src, "expected": exp})
+    return jsonify({"pairs": pairs})
+
+
+@app.route("/api/redirects/export/<job_id>")
+def redirects_export(job_id):
+    job = JOBS.get(job_id)
+    if not job or not job.get("redirect_results"):
+        abort(404)
+    results = job["redirect_results"]
+    fmt = request.args.get("fmt", "csv")
+    from io import BytesIO, StringIO
+    cols = ["Source URL", "Expected", "Actual Final URL", "Result", "Redirect Type",
+            "Hops", "Chain", "Loop", "Final Status", "Canonical OK", "Indexable",
+            "HTTPS", "Speed (ms)", "Issues"]
+
+    def row_of(r):
+        return [r["source"], r.get("expected", ""), r["final_url"], r["result"],
+                r.get("redirect_type"), r["hops"], "yes" if r["is_chain"] else "no",
+                "yes" if r["is_loop"] else "no", r["final_status"],
+                "yes" if r["canonical_ok"] else "no", "yes" if r["indexable"] else "no",
+                "yes" if r["is_https"] else "no", r["speed_ms"],
+                " | ".join(i["msg"] for i in r["issues"])]
+
+    if fmt == "xlsx":
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Redirects"
+        ws.append(cols)
+        for r in results:
+            ws.append(row_of(r))
+        bio = BytesIO()
+        wb.save(bio)
+        bio.seek(0)
+        return send_file(bio, as_attachment=True,
+                         download_name=f"Redirect-Validation-{datetime.now():%Y%m%d-%H%M}.xlsx",
+                         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    import csv
+    sio = StringIO()
+    w = csv.writer(sio)
+    w.writerow(cols)
+    for r in results:
+        w.writerow(row_of(r))
+    bio = BytesIO(sio.getvalue().encode("utf-8-sig"))
+    return send_file(bio, as_attachment=True,
+                     download_name=f"Redirect-Validation-{datetime.now():%Y%m%d-%H%M}.csv",
+                     mimetype="text/csv")
 
 
 if __name__ == "__main__":

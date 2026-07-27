@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirect Validation — SEO Migration Toolkit</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
+    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
+  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+  .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px}
+  .navlink:hover{color:var(--ink);background:var(--card2)}
+  .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  h1{font-size:24px;margin:0 0 4px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 22px;max-width:74ch}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card h2{font-size:13px;margin:0 0 16px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  input[type=text],input[type=number],select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+  input[type=file]{background:none;border:none;padding:8px 0;font-size:13px;color:var(--muted)}
+  .row{margin-bottom:16px}
+  .hint{font-size:12px;color:var(--grey);margin-top:5px}
+  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;border-radius:11px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer}
+  .btn:disabled{opacity:.5}
+  .btn.ghost{background:var(--card2);color:var(--muted);font-size:13px;padding:9px 16px}
+  .err{background:rgba(214,69,80,.1);border:1px solid var(--red);color:#b23;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
+  #panel{display:none}
+  .phase{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .bar{height:8px;background:var(--card2);border-radius:8px;overflow:hidden;margin-bottom:6px}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--green));transition:width .3s}
+  /* dashboard */
+  .dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .tile b{display:block;font-size:22px;letter-spacing:-.02em}.tile small{color:var(--muted);font-size:11px}
+  .tile.pass b{color:var(--green)} .tile.fail b{color:var(--red)} .tile.warn b{color:var(--amber)}
+  .score{display:flex;align-items:center;gap:16px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:16px}
+  .score .num{font-size:40px;font-weight:800;line-height:1}
+  .score .lbl{font-size:13px;color:var(--muted)}
+  .recs{font-size:13px;color:var(--ink)} .recs li{margin-bottom:3px}
+  /* filters + table */
+  .filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .filters input[type=text]{flex:1;min-width:150px}
+  .filters button{font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
+  .filters button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .rcount{font-size:12px;color:var(--muted);margin-left:auto}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .tbl th{text-align:left;color:var(--muted);font-weight:700;padding:9px 8px;border-bottom:2px solid var(--line);white-space:nowrap}
+  .tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .u{word-break:break-all;max-width:230px}
+  .pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap}
+  .p-pass{background:rgba(31,157,107,.15);color:var(--green)}
+  .p-fail{background:rgba(214,69,80,.15);color:var(--red)}
+  .st-ok{color:var(--green);font-weight:700}.st-bad{color:var(--red);font-weight:700}.st-warn{color:var(--amber);font-weight:700}
+  .rtype{font-weight:700}
+  .caret{cursor:pointer;color:var(--brand);font-weight:700}
+  .detail{display:none;background:var(--card2)}
+  .detail td{padding:12px 14px}
+  .hop{font-family:ui-monospace,monospace;font-size:12px;padding:3px 0}
+  .hop .code{display:inline-block;min-width:42px;font-weight:700}
+  .issue{font-size:12.5px;padding:3px 0}
+  .sev{font-size:10px;font-weight:800;padding:1px 7px;border-radius:5px;margin-right:6px}
+  .sev.Critical{background:var(--red);color:#fff}.sev.High{background:var(--amber);color:#241800}
+  .sev.Medium{background:var(--brand);color:#fff}.sev.Low{background:var(--grey);color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <span class="brand">SEO Migration Toolkit</span>
+    <a class="navlink" href="/">Site Audit</a>
+    <a class="navlink" href="/meta">Meta &amp; Canonical</a>
+    <a class="navlink active" href="/redirects">Redirects</a>
+    <a class="navlink" href="/checklist">Checklist</a>
+    <a class="navlink" href="/settings">Settings</a>
+  </nav>
+
+  <h1>Redirect Validation</h1>
+  <p class="lede">Validate redirects for a migration: follow every redirect, compare the final landing page to the expected destination, and flag chains, loops, broken finals, canonical &amp; indexability issues, HTTPS, and slow redirects.</p>
+
+  <div class="card">
+    <h2>Input</h2>
+    <div class="row">
+      <label>Input source</label>
+      <select id="input_mode" class="modesel">
+        <option value="paste">Paste URLs (one per line — optionally “source , expected”)</option>
+        <option value="csv">CSV upload (Source URL, Expected Landing Page)</option>
+        <option value="xlsx">Excel upload (.xlsx)</option>
+        <option value="sitemap">XML sitemap (validate all its URLs)</option>
+        <option value="manual">Manual entry (single URL)</option>
+      </select>
+    </div>
+    <div class="row in-src" id="in_paste">
+      <label>Paste URLs</label>
+      <textarea id="paste_urls" rows="7" placeholder="https://old.example.com/course-a , https://example.com/course-a/&#10;https://example.com/blog-old&#10;https://example.com/page?utm_source=x"></textarea>
+      <div class="hint">One URL per line. Add an expected destination after a comma or tab to check the landing page.</div>
+    </div>
+    <div class="row in-src" id="in_csv" style="display:none">
+      <label>CSV file</label>
+      <input type="file" id="csv_file" accept=".csv,.txt">
+      <div class="hint" id="csv_info">Columns: Source URL (required), Expected Landing Page (optional).</div>
+    </div>
+    <div class="row in-src" id="in_xlsx" style="display:none">
+      <label>Excel file (.xlsx)</label>
+      <input type="file" id="xlsx_file" accept=".xlsx">
+      <div class="hint" id="xlsx_info">Columns: Source URL (required), Expected Landing Page (optional).</div>
+    </div>
+    <div class="row in-src" id="in_sitemap" style="display:none">
+      <label>Sitemap URL</label>
+      <input type="text" id="sitemap_url" placeholder="https://www.invensislearning.com/sitemap.xml">
+      <div class="hint" id="sitemap_info">Every URL in the sitemap is checked for redirects (no expected destination).</div>
+    </div>
+    <div class="row in-src" id="in_manual" style="display:none">
+      <label>Source URL</label>
+      <input type="text" id="manual_source" placeholder="https://example.com/old-page">
+      <label style="margin-top:10px">Expected landing page (optional)</label>
+      <input type="text" id="manual_expected" placeholder="https://example.com/new-page/">
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="runBtn">Validate Redirects</button>
+      <button class="btn ghost" id="stopBtn" style="display:none">Stop</button>
+      <span class="hint" id="loadInfo"></span>
+    </div>
+    <div class="err" id="cfgErr"></div>
+  </div>
+
+  <div class="card" id="panel">
+    <div class="phase" id="phaseTxt">Starting…</div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="hint" id="curUrl"></div>
+
+    <div id="results" style="display:none">
+      <div class="score">
+        <div><div class="num" id="scoreNum">–</div><div class="lbl" id="scoreLbl">SEO redirect health</div></div>
+        <div class="recs"><b style="font-size:12px;color:var(--muted)">TOP RECOMMENDATIONS</b><ul id="recs" style="margin:6px 0 0;padding-left:18px"></ul></div>
+      </div>
+      <div class="dash" id="dash"></div>
+
+      <div class="filters">
+        <input type="text" id="fSearch" placeholder="Search URL…">
+        <button data-f="all" class="on">All</button>
+        <button data-f="pass">Passed</button>
+        <button data-f="fail">Failed</button>
+        <button data-f="301">301</button>
+        <button data-f="302">302</button>
+        <button data-f="404">404</button>
+        <button data-f="chain">Chains</button>
+        <button data-f="loop">Loops</button>
+        <button data-f="canon">Canonical</button>
+        <button data-f="noindex">Noindex</button>
+        <button data-f="slow">Slow</button>
+        <button data-f="https">HTTPS</button>
+        <span class="rcount" id="rCount"></span>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <a class="btn ghost" id="expCsv" href="#">⬇ Export CSV</a>
+        <a class="btn ghost" id="expXlsx" href="#">⬇ Export Excel</a>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th></th><th>Source URL</th><th>Expected</th><th>Actual final URL</th><th>Type</th><th>Chain</th><th>Final</th><th>Canonical</th><th>Index</th><th>Speed</th><th>Result</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let jobId=null, poll=null, RES=[], SUMM=null, FILT="all";
+
+function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+$("input_mode").addEventListener("change",()=>{const m=$("input_mode").value;
+  document.querySelectorAll(".in-src").forEach(e=>e.style.display="none");$("in_"+m).style.display="";});
+
+// ---- CSV parsing ----
+function csvToRows(t){const rows=[];let row=[],f="",q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true; else if(c===","){row.push(f);f="";}
+    else if(c==="\n"){row.push(f);rows.push(row);row=[];f="";} else if(c!=="\r")f+=c;}
+  if(f.length||row.length){row.push(f);rows.push(row);} return rows;}
+function pairsFromRows(rows){
+  if(!rows.length)return[];
+  let start=0;
+  if(!/https?:\/\//.test((rows[0][0]||"")))start=1; // skip header row
+  const out=[];
+  for(let i=start;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const src=(r[0]||"").trim(); if(!/https?:\/\//.test(src))continue;
+    const exp=(r[1]||"").trim();
+    out.push({source:src,expected:/https?:\/\//.test(exp)?exp:""});}
+  return out;}
+let csvPairs=[], xlsxPairs=[];
+$("csv_file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();rd.onload=()=>{csvPairs=pairsFromRows(csvToRows(rd.result));
+    $("csv_info").textContent=csvPairs.length+" source URL(s) from "+f.name;};rd.readAsText(f);});
+$("xlsx_file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;
+  $("xlsx_info").textContent="Parsing "+f.name+"…";
+  const fd=new FormData();fd.append("file",f);
+  try{const d=await(await fetch("/api/redirects/upload_xlsx",{method:"POST",body:fd})).json();
+    xlsxPairs=d.pairs||[];$("xlsx_info").textContent=(d.error?d.error:xlsxPairs.length+" source URL(s) from "+f.name);}
+  catch(err){$("xlsx_info").textContent="Failed to parse: "+err.message;}});
+
+function pastePairs(text){
+  return text.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    const parts=l.split(/[,\t]/).map(x=>x.trim());
+    const src=parts.find(x=>/https?:\/\//.test(x))||parts[0];
+    const exp=parts.filter(x=>/https?:\/\//.test(x))[1]||"";
+    return {source:src,expected:exp};
+  }).filter(p=>/https?:\/\//.test(p.source));
+}
+
+$("runBtn").onclick=async()=>{
+  $("cfgErr").style.display="none";
+  const mode=$("input_mode").value;
+  let pairs=[];
+  if(mode==="paste")pairs=pastePairs($("paste_urls").value);
+  else if(mode==="csv")pairs=csvPairs;
+  else if(mode==="xlsx")pairs=xlsxPairs;
+  else if(mode==="manual"){const s=$("manual_source").value.trim();
+    if(/https?:\/\//.test(s))pairs=[{source:s,expected:$("manual_expected").value.trim()}];}
+  else if(mode==="sitemap"){
+    const sm=$("sitemap_url").value.trim();
+    if(!/https?:\/\//.test(sm)){err("Enter a valid sitemap URL.");return;}
+    $("loadInfo").textContent="Reading sitemap…";
+    try{const d=await(await fetch("/api/redirects/sitemap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sitemap_url:sm})}).then(r=>r.json()));
+      if(d.error){err(d.error);return;} pairs=(d.urls||[]).map(u=>({source:u,expected:""}));
+      $("loadInfo").textContent=pairs.length+" URLs from sitemap";}
+    catch(e2){err("Sitemap error: "+e2.message);return;}
+  }
+  if(!pairs.length){err("No valid source URLs found for this input.");return;}
+  const r=await fetch("/api/redirects/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pairs})});
+  const j=await r.json();
+  if(j.error){err(j.error);return;}
+  jobId=j.job_id;
+  $("runBtn").disabled=true;$("stopBtn").style.display="inline-block";
+  $("panel").style.display="block";$("results").style.display="none";
+  poll=setInterval(tick,700);
+};
+function err(m){$("cfgErr").textContent=m;$("cfgErr").style.display="block";}
+$("stopBtn").onclick=async()=>{if(jobId)await fetch("/api/stop/"+jobId,{method:"POST"});};
+
+const PH={starting:"Starting…",validating:"Following redirects…",complete:"Complete ✓",stopped:"Stopped",error:"Error"};
+async function tick(){
+  const p=await(await fetch("/api/progress/"+jobId)).json();
+  $("phaseTxt").textContent=(PH[p.phase]||p.phase)+(p.found?" ("+p.crawled+"/"+p.found+")":"");
+  $("barFill").style.width=(p.found?Math.round(p.crawled/p.found*100):(p.done?100:5))+"%";
+  $("curUrl").textContent=p.current?"→ "+p.current:"";
+  if(p.error)$("phaseTxt").textContent="Error: "+p.error;
+  if(p.done){clearInterval(poll);$("runBtn").disabled=false;$("stopBtn").style.display="none";await load();}
+}
+async function load(){
+  const d=await(await fetch("/api/redirects/results/"+jobId)).json();
+  RES=d.results||[];SUMM=d.summary||{};
+  $("expCsv").href="/api/redirects/export/"+jobId+"?fmt=csv";
+  $("expXlsx").href="/api/redirects/export/"+jobId+"?fmt=xlsx";
+  renderDash();render();
+  $("results").style.display="block";
+}
+
+function renderDash(){
+  const s=SUMM;
+  const sc=s.health_score;
+  $("scoreNum").textContent=sc; $("scoreNum").style.color=sc>=80?"var(--green)":(sc>=50?"var(--amber)":"var(--red)");
+  $("scoreLbl").textContent="SEO redirect health — "+(sc>=80?"Good":(sc>=50?"Needs work":"Poor"));
+  const recs=[];
+  if(s.loops)recs.push(s.loops+" redirect loop(s) — fix immediately (Critical)");
+  if(s.broken)recs.push(s.broken+" redirect(s) end on a broken/error page");
+  if(s.wrong_landing)recs.push(s.wrong_landing+" land on the wrong page vs expected");
+  if(s.chains)recs.push(s.chains+" chain(s) — redirect straight to the final URL");
+  if(s.temporary)recs.push(s.temporary+" temporary (302/307) — switch to 301 for migration");
+  if(s.canonical_errors)recs.push(s.canonical_errors+" canonical mismatch(es)");
+  if(s.non_indexable)recs.push(s.non_indexable+" final page(s) are noindex");
+  if(!recs.length)recs.push("All redirects look healthy ✓");
+  $("recs").innerHTML=recs.slice(0,6).map(r=>"<li>"+esc(r)+"</li>").join("");
+  $("dash").innerHTML=[
+    ["total","Total URLs",s.total],["pass","Passed",s.passed],["fail","Failed",s.failed],
+    ["warn","Chains",s.chains],["fail","Loops",s.loops],["fail","Broken",s.broken],
+    ["fail","Wrong landing",s.wrong_landing],["warn","Canonical errors",s.canonical_errors],
+    ["warn","Non-indexable",s.non_indexable],["warn","Slow",s.slow],
+    ["total","Avg speed",s.avg_speed_ms+" ms"]
+  ].map(([cls,lbl,v])=>'<div class="tile '+cls+'"><b>'+v+'</b><small>'+lbl+'</small></div>').join("");
+}
+
+function matches(r){
+  switch(FILT){
+    case "pass":return r.result==="PASS"; case "fail":return r.result==="FAIL";
+    case "301":return r.redirect_type===301; case "302":return r.redirect_type===302;
+    case "404":return r.final_status===404||r.final_status===410;
+    case "chain":return r.is_chain; case "loop":return r.is_loop;
+    case "canon":return !r.canonical_ok; case "noindex":return r.final_status===200&&!r.indexable;
+    case "slow":return r.slow; case "https":return r.final_status===200&&!r.is_https;
+    default:return true;
+  }
+}
+function statusCls(s){return s===200?"st-ok":(s>=300&&s<400?"st-warn":"st-bad");}
+function render(){
+  const q=$("fSearch").value.toLowerCase().trim();
+  let list=RES.filter(r=>matches(r)&&(!q||(r.source+" "+r.final_url).toLowerCase().includes(q)));
+  $("rCount").textContent=list.length+" of "+RES.length;
+  $("tb").innerHTML=list.map((r,i)=>{
+    const type=r.redirect_type==null?"—":(r.redirect_type===200?"—":r.redirect_type);
+    const typeCls=(r.redirect_type===301||r.redirect_type===308)?"st-ok":(r.redirect_type===302||r.redirect_type===307?"st-warn":"");
+    const chain=r.is_loop?'<span class="st-bad">loop</span>':(r.is_chain?'<span class="st-warn">'+r.hops+' hops</span>':(r.hops===1?'1':'0'));
+    const canon=r.canonical_ok?'<span class="st-ok">✓</span>':'<span class="st-bad">≠</span>';
+    const idx=r.final_status!==200?'—':(r.indexable?'<span class="st-ok">yes</span>':'<span class="st-bad">no</span>');
+    const detail='<tr class="detail" id="d'+i+'"><td colspan="11">'
+      +'<b style="font-size:12px">Redirect chain</b><div style="margin:6px 0">'
+      + (r.chain.length?r.chain.map(h=>'<div class="hop"><span class="code '+statusCls(h.status)+'">'+(h.status||'ERR')+'</span> '+esc(h.url)+(h.error?' <span class="st-bad">('+esc(h.error)+')</span>':'')+'</div>').join(""):'<div class="hop">no steps</div>')
+      +'</div>'
+      + (r.issues.length?'<b style="font-size:12px">Issues</b><div style="margin-top:6px">'+r.issues.map(x=>'<div class="issue"><span class="sev '+x.severity+'">'+x.severity+'</span>'+esc(x.msg)+'</div>').join("")+'</div>':'<div class="issue st-ok">No issues.</div>')
+      +'</td></tr>';
+    return '<tr>'
+      +'<td><span class="caret" onclick="var d=document.getElementById(\'d'+i+'\');d.style.display=d.style.display===\'table-row\'?\'none\':\'table-row\'">▸</span></td>'
+      +'<td class="u">'+esc(r.source)+'</td>'
+      +'<td class="u">'+(r.expected?esc(r.expected):'<span style="color:var(--grey)">—</span>')+'</td>'
+      +'<td class="u">'+esc(r.final_url)+'</td>'
+      +'<td class="rtype '+typeCls+'">'+type+'</td>'
+      +'<td>'+chain+'</td>'
+      +'<td class="'+statusCls(r.final_status)+'">'+(r.final_status||'ERR')+'</td>'
+      +'<td>'+canon+'</td>'
+      +'<td>'+idx+'</td>'
+      +'<td class="'+(r.slow?'st-warn':'')+'">'+r.speed_ms+'</td>'
+      +'<td><span class="pill '+(r.result==="PASS"?"p-pass":"p-fail")+'">'+r.result+'</span></td>'
+      +'</tr>'+detail;
+  }).join("")||'<tr><td colspan="11" style="color:var(--muted);padding:20px">No rows match.</td></tr>';
+}
+document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');FILT=b.getAttribute('data-f');render();}));
+$("fSearch").addEventListener('input',render);
+</script>
+</body>
+</html>
