@@ -401,42 +401,74 @@ def download(job_id):
 
 # ------------------------- Redirect Validation -------------------------
 
+def _validate_pairs(job, pairs):
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    stop = job["stop_flag"]
+    job.update(phase="validating", crawled=0, found=len(pairs))
+    session = redirects.make_session()
+    results = [None] * len(pairs)
+    done = 0
+    with ThreadPoolExecutor(max_workers=16) as ex:
+        futs = {ex.submit(redirects.validate, p["source"], p.get("expected", ""), session): i
+                for i, p in enumerate(pairs)}
+        for f in as_completed(futs):
+            if stop.is_set():
+                break
+            i = futs[f]
+            try:
+                results[i] = f.result()
+            except Exception as e:
+                results[i] = {"source": pairs[i]["source"], "expected": pairs[i].get("expected", ""),
+                              "final_url": pairs[i]["source"], "final_status": 0,
+                              "redirect_type": None, "hops": 0, "chain": [], "is_chain": False,
+                              "is_loop": False, "expected_match": None, "canonical": "",
+                              "canonical_ok": True, "indexable": True, "index_reason": "",
+                              "is_https": False, "www": {}, "trailing_slash": {}, "lost_params": [],
+                              "lost_utm": [], "speed_ms": 0, "slow": False,
+                              "issues": [{"severity": "Critical", "msg": "Validation error: " + str(e)[:120]}],
+                              "result": "FAIL"}
+            done += 1
+            job.update(phase="validating", crawled=done, found=len(pairs),
+                       current=pairs[i]["source"])
+    results = [r for r in results if r]
+    job["redirect_results"] = results
+    job["redirect_summary"] = redirects.summarize(results)
+    job["phase"] = "complete"
+    job["done"] = True
+
+
 def run_redirects(job_id, pairs):
     job = JOBS[job_id]
     try:
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        stop = job["stop_flag"]
-        job["phase"] = "validating"
-        session = redirects.make_session()
-        results = [None] * len(pairs)
-        done = 0
-        with ThreadPoolExecutor(max_workers=16) as ex:
-            futs = {ex.submit(redirects.validate, p["source"], p.get("expected", ""), session): i
-                    for i, p in enumerate(pairs)}
-            for f in as_completed(futs):
-                if stop.is_set():
-                    break
-                i = futs[f]
-                try:
-                    results[i] = f.result()
-                except Exception as e:
-                    results[i] = {"source": pairs[i]["source"], "expected": pairs[i].get("expected", ""),
-                                  "final_url": pairs[i]["source"], "final_status": 0,
-                                  "redirect_type": None, "hops": 0, "chain": [], "is_chain": False,
-                                  "is_loop": False, "expected_match": None, "canonical": "",
-                                  "canonical_ok": True, "indexable": True, "index_reason": "",
-                                  "is_https": False, "www": {}, "trailing_slash": {}, "lost_params": [],
-                                  "lost_utm": [], "speed_ms": 0, "slow": False,
-                                  "issues": [{"severity": "Critical", "msg": "Validation error: " + str(e)[:120]}],
-                                  "result": "FAIL"}
-                done += 1
-                job.update(phase="validating", crawled=done, found=len(pairs),
-                           current=pairs[i]["source"])
-        results = [r for r in results if r]
-        job["redirect_results"] = results
-        job["redirect_summary"] = redirects.summarize(results)
-        job["phase"] = "complete"
+        _validate_pairs(job, pairs)
+    except Exception as e:
+        import traceback
+        job["error"] = str(e)
+        job["traceback"] = traceback.format_exc()
+        job["phase"] = "error"
         job["done"] = True
+
+
+def run_redirects_crawl(job_id, start_url, max_pages):
+    """Crawl a site to discover URLs, then validate redirects on each."""
+    job = JOBS[job_id]
+    try:
+        job["phase"] = "crawling"
+        c = crawler.Crawler(start_url=start_url, max_pages=max_pages, workers=16,
+                            progress_cb=lambda **k: job.update(k), stop_flag=job["stop_flag"])
+        pages, _ = c.run()
+        if job["stop_flag"].is_set():
+            job["phase"] = "stopped"
+            job["done"] = True
+            return
+        # de-duplicate the discovered URLs
+        seen, urls = set(), []
+        for p in pages:
+            u = p.get("url")
+            if u and u not in seen:
+                seen.add(u)
+                urls.append(u)
+        _validate_pairs(job, [{"source": u, "expected": ""} for u in urls])
     except Exception as e:
         import traceback
         job["error"] = str(e)
@@ -453,6 +485,23 @@ def redirects_page():
 @app.route("/api/redirects/start", methods=["POST"])
 def redirects_start():
     data = request.get_json(force=True)
+    # crawl-then-validate mode
+    crawl = data.get("crawl")
+    if crawl:
+        start_url = (crawl.get("start_url") or "").strip()
+        if not start_url.startswith("http"):
+            return jsonify({"error": "Enter a valid website URL to crawl."}), 400
+        try:
+            max_pages = max(1, min(int(crawl.get("max_pages", 500)), 15000))
+        except (TypeError, ValueError):
+            max_pages = 500
+        job_id = uuid.uuid4().hex[:12]
+        JOBS[job_id] = {"phase": "starting", "crawled": 0, "found": 0, "current": "",
+                        "done": False, "error": None, "stop_flag": threading.Event()}
+        threading.Thread(target=run_redirects_crawl,
+                         args=(job_id, start_url, max_pages), daemon=True).start()
+        return jsonify({"job_id": job_id})
+
     raw = data.get("pairs") or []
     pairs = [{"source": (p.get("source") or "").strip(),
               "expected": (p.get("expected") or "").strip()}

@@ -104,8 +104,16 @@
         <option value="csv">CSV upload (Source URL, Expected Landing Page)</option>
         <option value="xlsx">Excel upload (.xlsx)</option>
         <option value="sitemap">XML sitemap (validate all its URLs)</option>
+        <option value="crawl">Crawl website (discover URLs by following links)</option>
         <option value="manual">Manual entry (single URL)</option>
       </select>
+    </div>
+    <div class="row in-src" id="in_crawl" style="display:none">
+      <label>Website URL to crawl</label>
+      <input type="text" id="crawl_url" placeholder="https://www.invensislearning.com/">
+      <label style="margin-top:10px">Max pages to crawl</label>
+      <input type="number" id="crawl_max" value="200" min="1" max="15000">
+      <div class="hint">Crawls the site by following links, then checks every discovered URL for redirects.</div>
     </div>
     <div class="row in-src" id="in_paste">
       <label>Paste URLs</label>
@@ -228,9 +236,26 @@ function pastePairs(text){
   }).filter(p=>/https?:\/\//.test(p.source));
 }
 
+async function startJob(body){
+  const r=await fetch("/api/redirects/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.error){err(j.error);return;}
+  jobId=j.job_id;
+  $("runBtn").disabled=true;$("stopBtn").style.display="inline-block";
+  $("panel").style.display="block";$("results").style.display="none";
+  poll=setInterval(tick,700);
+}
+
 $("runBtn").onclick=async()=>{
   $("cfgErr").style.display="none";
   const mode=$("input_mode").value;
+  // crawl mode runs the crawl server-side, then validates the discovered URLs
+  if(mode==="crawl"){
+    const su=$("crawl_url").value.trim();
+    if(!/https?:\/\//.test(su)){err("Enter a valid website URL to crawl.");return;}
+    await startJob({crawl:{start_url:su, max_pages:$("crawl_max").value||200}});
+    return;
+  }
   let pairs=[];
   if(mode==="paste")pairs=pastePairs($("paste_urls").value);
   else if(mode==="csv")pairs=csvPairs;
@@ -247,18 +272,12 @@ $("runBtn").onclick=async()=>{
     catch(e2){err("Sitemap error: "+e2.message);return;}
   }
   if(!pairs.length){err("No valid source URLs found for this input.");return;}
-  const r=await fetch("/api/redirects/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pairs})});
-  const j=await r.json();
-  if(j.error){err(j.error);return;}
-  jobId=j.job_id;
-  $("runBtn").disabled=true;$("stopBtn").style.display="inline-block";
-  $("panel").style.display="block";$("results").style.display="none";
-  poll=setInterval(tick,700);
+  await startJob({pairs});
 };
 function err(m){$("cfgErr").textContent=m;$("cfgErr").style.display="block";}
 $("stopBtn").onclick=async()=>{if(jobId)await fetch("/api/stop/"+jobId,{method:"POST"});};
 
-const PH={starting:"Starting…",validating:"Following redirects…",complete:"Complete ✓",stopped:"Stopped",error:"Error"};
+const PH={starting:"Starting…",crawling:"Crawling site…",validating:"Following redirects…",complete:"Complete ✓",stopped:"Stopped",error:"Error"};
 async function tick(){
   const p=await(await fetch("/api/progress/"+jobId)).json();
   $("phaseTxt").textContent=(PH[p.phase]||p.phase)+(p.found?" ("+p.crawled+"/"+p.found+")":"");
