@@ -6,13 +6,15 @@
 <title>SEO Pre-Migration Audit Tool</title>
 <style>
   :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
-    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
+    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
+    --shadow:0 8px 28px rgba(30,45,90,.07);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh}
+    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
+    color:var(--ink);min-height:100vh}
   .wrap{max-width:960px;margin:0 auto;padding:32px 20px 60px}
   .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .topnav .brand{font-weight:800;font-size:14px;letter-spacing:-.01em;margin-right:14px;color:var(--ink)}
@@ -29,17 +31,17 @@
   .badge{display:inline-block;background:var(--card2);color:var(--brand);
     padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-left:8px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:24px;margin-bottom:20px;box-shadow:0 6px 20px rgba(30,50,90,.06)}
+    padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
   .card h2{font-size:15px;margin:0 0 18px;color:var(--muted);text-transform:uppercase;
     letter-spacing:.08em;font-weight:700}
   label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
   input[type=text],input[type=number]{width:100%;background:var(--card2);
     border:1px solid var(--line);color:var(--ink);border-radius:10px;
     padding:11px 13px;font-size:14px;outline:none}
-  input:focus{border-color:var(--brand)}
+  input:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(58,107,255,.12)}
   .modesel,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);
-    border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
-  .modesel:focus,textarea:focus{border-color:var(--brand)}
+    border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit;transition:.12s}
+  .modesel:focus,textarea:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(58,107,255,.12)}
   input[type=file]{font-size:13px;color:var(--muted);padding:8px 0}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
   .row3{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -51,8 +53,25 @@
   .hint{font-size:12px;color:var(--grey);margin-top:5px}
   .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;
     border:none;border-radius:11px;padding:13px 26px;font-size:15px;font-weight:700;
-    cursor:pointer;transition:.15s;box-shadow:0 6px 18px rgba(58,107,255,.4)}
+    cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(58,107,255,.28)}
   .btn:hover{transform:translateY(-1px)}
+  /* health hero dashboard */
+  .hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+  @media(max-width:640px){.hero{grid-template-columns:1fr}}
+  .gauge{width:132px;height:132px}.gauge text{fill:var(--ink)}
+  .gaugeLbl{text-align:center;font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+  .distrib{height:14px;border-radius:8px;overflow:hidden;display:flex;background:var(--card2);margin-bottom:8px}
+  .distrib i{height:100%}.distrib .p{background:var(--green)}.distrib .f{background:var(--red)}
+  .distLbl{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
+  .distLbl b{color:var(--ink)}
+  .fix{display:flex;flex-direction:column;gap:8px}
+  .fixrow{display:flex;align-items:center;gap:12px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 14px;font-size:13.5px}
+  .fixrow .cnt{font-weight:800;font-size:18px;min-width:34px}
+  .fixrow.crit{border-left:4px solid var(--red)}.fixrow.crit .cnt{color:var(--red)}
+  .fixrow.high{border-left:4px solid var(--amber)}.fixrow.high .cnt{color:var(--amber)}
+  .fixrow.med{border-left:4px solid var(--brand)}.fixrow.med .cnt{color:var(--brand)}
+  .fixrow.low{border-left:4px solid var(--grey)}.fixrow.low .cnt{color:var(--grey)}
+  .fixrow.ok{border-left:4px solid var(--green)}.fixrow.ok .cnt{color:var(--green)}
   .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
   .btn.ghost{background:var(--card2);box-shadow:none;color:var(--muted)}
   .btn.green{background:linear-gradient(135deg,#37c98a,#25a06c);box-shadow:0 6px 18px rgba(55,201,138,.4)}
@@ -263,6 +282,25 @@ https://www.invensislearning.com/pmp-certification-training/"></textarea>
     <span class="hint" id="gscNote"></span>
 
     <div id="results">
+      <div class="card" style="box-shadow:none;border:1px solid var(--line);margin:0 0 16px;background:linear-gradient(180deg,#fff,#fafbff)">
+        <div class="hero">
+          <div>
+            <svg class="gauge" viewBox="0 0 132 132" width="132" height="132">
+              <circle cx="66" cy="66" r="56" fill="none" stroke="var(--card2)" stroke-width="13"/>
+              <circle id="gaugeArc" cx="66" cy="66" r="56" fill="none" stroke="var(--green)" stroke-width="13"
+                stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" transform="rotate(-90 66 66)" style="transition:stroke-dashoffset .5s,stroke .3s"/>
+              <text id="gaugeNum" x="66" y="70" text-anchor="middle" font-size="34" font-weight="800">–</text>
+              <text x="66" y="90" text-anchor="middle" font-size="10" fill="#8a93ab">/ 100</text>
+            </svg>
+            <div class="gaugeLbl" id="gaugeLbl">SEO health</div>
+          </div>
+          <div style="min-width:0">
+            <div class="distrib" id="distrib"></div>
+            <div class="distLbl" id="distLbl"></div>
+            <div class="fix" id="fix" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
       <div class="resSummary" id="resSummary"></div>
       <div class="filterbar">
         <input type="text" id="fSearch" placeholder="Search URL or issue…">
@@ -457,6 +495,28 @@ function gscKey(u){return (u||"").replace(/\/$/,"");}
 function gscOf(p){return GSC[gscKey(p.url)] || null;}
 function nfmt(n){return (n||0).toLocaleString();}
 
+// ---- health dashboard ----
+const HC=351.9;
+function renderHealth(s){
+  const sc=(s.health_score!=null)?s.health_score:100;
+  const col=sc>=80?"var(--green)":(sc>=50?"var(--amber)":"var(--red)");
+  $("gaugeArc").style.strokeDashoffset=HC*(1-sc/100);$("gaugeArc").style.stroke=col;
+  $("gaugeNum").textContent=sc;$("gaugeNum").setAttribute("fill",sc>=80?"#12a06a":sc>=50?"#d98a00":"#e0475a");
+  $("gaugeLbl").textContent=sc>=80?"Healthy":(sc>=50?"Needs work":"Poor");
+  const tot=s.pages_crawled||1,pw=Math.round((s.pages_clear||0)/tot*100),fw=100-pw;
+  $("distrib").innerHTML='<i class="p" style="width:'+pw+'%"></i><i class="f" style="width:'+fw+'%"></i>';
+  $("distLbl").innerHTML='<span><b>'+nfmt(s.pages_clear)+'</b> clear</span><span><b>'+nfmt(s.pages_with_issues)+'</b> with issues</span><span><b>'+nfmt(s.total_issues)+'</b> total issues</span>';
+  const bs=s.by_severity||{};const F=[];
+  if(bs.Critical)F.push(["crit","Critical",bs.Critical,"Critical — fix before migration"]);
+  if(bs.High)F.push(["high","High",bs.High,"High-priority issues"]);
+  if(bs.Medium)F.push(["med","Medium",bs.Medium,"Medium issues"]);
+  if(bs.Low)F.push(["low","Low",bs.Low,"Low / hygiene issues"]);
+  if(!F.length)F.push(["ok","","✓","All pages clear"]);
+  $("fix").innerHTML=F.map(([c,sev,n,t])=>'<div class="fixrow '+c+'"><span class="cnt">'+nfmt(n)+'</span><span>'+t+'</span>'
+    +(sev?'<span style="margin-left:auto;color:var(--brand);font-weight:600;cursor:pointer" onclick="jumpSev(\''+sev+'\')">view →</span>':'')+'</div>').join("");
+}
+function jumpSev(sev){$("fVerdict").value="ISSUES";$("fSeverity").value=sev;render();$("urlList").scrollIntoView({behavior:"smooth"});}
+
 async function loadResults(){
   const r = await fetch("/api/results/"+jobId);
   if(!r.ok){ sessionStorage.removeItem("lastJob"); return false; }
@@ -486,6 +546,7 @@ async function loadResults(){
       + '<div class="box"><b>'+nfmt(d.summary.pages_crawled)+'</b><small>URLs audited</small></div>'
       + '<div class="box clear"><b>'+nfmt(d.summary.pages_clear)+'</b><small>Clear pages</small></div>'
       + '<div class="box issue"><b>'+nfmt(d.summary.total_issues)+'</b><small>Total issues</small></div>';
+    renderHealth(d.summary);
   }
   $("phaseTxt").textContent = "Audit complete ✓";
   $("dot").style.animation = "none";

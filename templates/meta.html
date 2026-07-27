@@ -6,13 +6,15 @@
 <title>Meta &amp; Canonical Audit — SEO Migration Toolkit</title>
 <style>
   :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
-    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
+    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
+    --shadow:0 8px 28px rgba(30,45,90,.07);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.5}
+    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
+    color:var(--ink);min-height:100vh;line-height:1.5}
   .wrap{max-width:1120px;margin:0 auto;padding:26px 20px 80px}
   .topnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
@@ -21,8 +23,15 @@
   .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
   h1{font-size:24px;margin:0 0 4px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 22px;max-width:70ch}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow)}
   .card h2{font-size:13px;margin:0 0 16px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+  input:focus,select:focus,textarea:focus{background:#fff;box-shadow:0 0 0 3px rgba(58,107,255,.12)}
+  .hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;margin-bottom:16px}
+  @media(max-width:640px){.hero{grid-template-columns:1fr}}
+  .gauge{width:128px;height:128px}.gaugeLbl{text-align:center;font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+  .distrib{height:14px;border-radius:8px;overflow:hidden;display:flex;background:var(--card2);margin-bottom:8px}
+  .distrib i{height:100%}.distrib .p{background:var(--green)}.distrib .f{background:var(--red)}
+  .distLbl{display:flex;gap:16px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}.distLbl b{color:var(--ink)}
   label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
   input[type=text],input[type=number],select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
   input:focus,select:focus,textarea:focus{border-color:var(--brand)}
@@ -121,6 +130,24 @@
     <div class="phase" id="phaseTxt">Starting…</div>
     <div class="bar"><i id="barFill"></i></div>
     <div id="results" style="display:none">
+      <div class="card" style="box-shadow:none;border:1px solid var(--line);margin:0 0 16px;background:linear-gradient(180deg,#fff,#fafbff)">
+        <div class="hero">
+          <div>
+            <svg class="gauge" viewBox="0 0 132 132" width="128" height="128">
+              <circle cx="66" cy="66" r="56" fill="none" stroke="var(--card2)" stroke-width="13"/>
+              <circle id="gaugeArc" cx="66" cy="66" r="56" fill="none" stroke="var(--green)" stroke-width="13"
+                stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" transform="rotate(-90 66 66)" style="transition:stroke-dashoffset .5s,stroke .3s"/>
+              <text id="gaugeNum" x="66" y="70" text-anchor="middle" font-size="34" font-weight="800">–</text>
+              <text x="66" y="90" text-anchor="middle" font-size="10" fill="#8a93ab">/ 100</text>
+            </svg>
+            <div class="gaugeLbl" id="gaugeLbl">SEO health</div>
+          </div>
+          <div style="min-width:0">
+            <div class="distrib" id="distrib"></div>
+            <div class="distLbl" id="distLbl"></div>
+          </div>
+        </div>
+      </div>
       <div class="summ" id="metaSumm"></div>
       <div class="filters">
         <input type="text" id="fSearch" placeholder="Search name or URL…">
@@ -155,7 +182,20 @@
 <script>
 const $=id=>document.getElementById(id);
 let jobId=null, poll=null, PAGES=[], ISSUES={};
-let GSC={}, GSC_90={}, GSC_365={};
+let GSC={}, GSC_90={}, GSC_365={}, SUMM=null;
+const HC=351.9;
+function renderMetaHealth(){
+  const s=SUMM||{};const sc=(s.health_score!=null)?s.health_score:100;
+  $("gaugeArc").style.strokeDashoffset=HC*(1-sc/100);
+  $("gaugeArc").style.stroke=sc>=80?"var(--green)":(sc>=50?"var(--amber)":"var(--red)");
+  $("gaugeNum").textContent=sc;$("gaugeNum").setAttribute("fill",sc>=80?"#12a06a":sc>=50?"#d98a00":"#e0475a");
+  $("gaugeLbl").textContent=sc>=80?"Healthy":(sc>=50?"Needs work":"Poor");
+  const tot=s.pages_crawled||PAGES.length||1,pw=Math.round((s.pages_clear||0)/tot*100);
+  $("distrib").innerHTML='<i class="p" style="width:'+pw+'%"></i><i class="f" style="width:'+(100-pw)+'%"></i>';
+  const bs=s.by_severity||{};
+  $("distLbl").innerHTML='<span><b>'+(s.pages_clear||0)+'</b> clear</span><span><b>'+(s.pages_with_issues||0)+'</b> with issues</span>'
+    +'<span><b style="color:var(--red)">'+(bs.Critical||0)+'</b> critical</span><span><b style="color:var(--amber)">'+(bs.High||0)+'</b> high</span>';
+}
 function gscKey(u){return (u||"").replace(/\/$/,"");}
 function gscOf(p){return GSC[gscKey(p.url)]||null;}
 function nfmt(n){return (n||0).toLocaleString();}
@@ -257,7 +297,8 @@ async function load(){
   if(!r.ok){ sessionStorage.removeItem("lastMetaJob"); return; }
   const d=await r.json();
   if(!d.pages||!d.pages.length){ return; }
-  PAGES=d.pages||[];ISSUES=d.issues_by_url||{};
+  PAGES=d.pages||[];ISSUES=d.issues_by_url||{};SUMM=d.summary||{};
+  renderMetaHealth();
   GSC_90=d.gsc_map_90||{}; GSC_365=d.gsc_map_365||{};
   GSC = ($("fGscPeriod").value==="365") ? GSC_365 : GSC_90;
   const hasGsc = Object.keys(GSC_90).length>0 || Object.keys(GSC_365).length>0;

@@ -487,6 +487,13 @@ def summarize(page_index, all_issues):
     for i in all_issues:
         by_check[i["check"]] = by_check.get(i["check"], 0) + 1
     clear = sum(1 for p in page_index if p["verdict"] == "CLEAR")
+    # weighted SEO health score (0-100) from severity rates per page
+    n = len(page_index) or 1
+    score = 100.0
+    score -= min(45, by_sev["Critical"] / n * 100 * 0.60)
+    score -= min(28, by_sev["High"] / n * 100 * 0.22)
+    score -= min(18, by_sev["Medium"] / n * 100 * 0.10)
+    score -= min(10, by_sev["Low"] / n * 100 * 0.04)
     return {
         "pages_crawled": len(page_index),
         "pages_clear": clear,
@@ -494,4 +501,5 @@ def summarize(page_index, all_issues):
         "total_issues": len(all_issues),
         "by_severity": by_sev,
         "by_check": dict(sorted(by_check.items(), key=lambda x: -x[1])),
+        "health_score": max(0, round(score)),
     }
