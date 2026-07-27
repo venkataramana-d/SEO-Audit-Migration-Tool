@@ -208,8 +208,20 @@ https://www.invensislearning.com/pmp-certification-training/"></textarea>
     <div class="row" id="gscrow">
       <label class="check full">
         <input type="checkbox" id="include_gsc" checked>
-        <span>Include Google Search Console data (clicks/impressions per page, flags top pages). Needs one-time login (already done).</span>
+        <span>Include Google Search Console data (flags top pages by clicks/impressions).</span>
       </label>
+    </div>
+    <div class="row">
+      <div class="full">
+        <label>GSC data source</label>
+        <div class="hint" style="margin-bottom:8px">Live API (uses your login — local only) <b>or</b> upload a GSC CSV export below (no login, works anywhere).</div>
+        <label style="font-size:12px">Upload GSC “Pages” CSV — last 3 months (optional)</label>
+        <input type="file" id="gsc_csv" accept=".csv">
+        <div class="hint" id="gsc_csv_info">Search Console → Performance → export → open the Pages sheet → save as CSV.</div>
+        <label style="font-size:12px;margin-top:10px">Upload GSC “Pages” CSV — last 12 months (optional)</label>
+        <input type="file" id="gsc_csv_12" accept=".csv">
+        <div class="hint" id="gsc_csv_12_info"></div>
+      </div>
     </div>
     <div class="actions">
       <button class="btn" id="runBtn">Run Audit</button>
@@ -305,6 +317,53 @@ $("csv_file").addEventListener("change", e => {
   reader.readAsText(f);
 });
 
+// ---- GSC CSV export parsing (works with no API/login) ----
+let gscRows = [], gscRows12 = [];
+function csvToRows(text){
+  const rows=[]; let row=[], field="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else q=false; } else field+=c; }
+    else if(c==='"') q=true;
+    else if(c===",") { row.push(field); field=""; }
+    else if(c==="\n"){ row.push(field); rows.push(row); row=[]; field=""; }
+    else if(c!=="\r") field+=c;
+  }
+  if(field.length||row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+function parseGsc(text){
+  const rows = csvToRows(text);
+  if(!rows.length) return [];
+  const h = rows[0].map(x=>x.toLowerCase().trim());
+  const find = (...keys)=> h.findIndex(x=>keys.some(k=>x.includes(k)));
+  let iU=find("page","url","landing","address"), iC=find("click"),
+      iI=find("impress"), iR=find("ctr"), iP=find("position");
+  const num = s => parseFloat(String(s||"").replace(/[,%\s]/g,""))||0;
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r) continue;
+    let u = (iU>=0? r[iU] : r[0]) || "";
+    u=u.trim();
+    if(!/https?:\/\//.test(u)) continue;   // only real URLs
+    out.push([u, num(r[iC]), num(r[iI]), num(r[iR]), num(r[iP])]);
+  }
+  return out;
+}
+function hookGsc(inputId, infoId, store){
+  $(inputId).addEventListener("change", e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>{ const rows=parseGsc(rd.result); store(rows);
+      $(infoId).textContent = rows.length
+        ? rows.length+" pages with data loaded from "+f.name
+        : "No URL rows found — make sure it's the GSC Pages export (with a page/URL column)."; };
+    rd.readAsText(f);
+  });
+}
+hookGsc("gsc_csv","gsc_csv_info", r=>gscRows=r);
+hookGsc("gsc_csv_12","gsc_csv_12_info", r=>gscRows12=r);
+
 $("runBtn").onclick = async () => {
   $("cfgErr").style.display = "none";
   const mode = $("input_mode").value;
@@ -321,6 +380,9 @@ $("runBtn").onclick = async () => {
     body.url_list = csvUrls;
   }
   else if(mode === "paste"){ body.url_list = extractUrls($("paste_urls").value); }
+  // uploaded GSC CSV takes priority over the live API (works with no login)
+  if(gscRows.length){ body.gsc_upload = gscRows; body.include_gsc = true; }
+  if(gscRows12.length){ body.gsc_upload_12 = gscRows12; }
   const r = await fetch("/api/start", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const j = await r.json();
   if (j.error){ $("cfgErr").textContent = j.error; $("cfgErr").style.display="block"; return; }

@@ -110,17 +110,34 @@ def run_job(job_id, params):
         job["issues_by_url"] = issues_by_url
         job["pages_by_url"] = {p.get("url"): p for p in pages}
 
+        def _num(x):
+            try:
+                return float(str(x).replace(",", "").replace("%", "").strip())
+            except (ValueError, TypeError):
+                return 0
+
         def _to_map(rows):
             m = {}
-            for rank, r in enumerate(sorted(rows, key=lambda x: x[1], reverse=True), 1):
-                m[r[0].rstrip("/")] = {
-                    "clicks": r[1], "impressions": r[2],
-                    "ctr": r[3], "position": r[4], "rank": rank,
+            for rank, r in enumerate(sorted(rows, key=lambda x: _num(x[1]), reverse=True), 1):
+                m[str(r[0]).rstrip("/")] = {
+                    "clicks": int(_num(r[1])), "impressions": int(_num(r[2])),
+                    "ctr": round(_num(r[3]), 2), "position": round(_num(r[4]), 1),
+                    "rank": rank,
                 }
             return m
 
         gsc_map_90, gsc_map_365 = {}, {}
-        if params.get("include_gsc"):
+        upload = params.get("gsc_upload")      # rows uploaded from a GSC CSV export
+        upload_12 = params.get("gsc_upload_12")
+        if upload:
+            # GSC data supplied by CSV upload — no API/login needed (works anywhere)
+            job["phase"] = "gsc"
+            try:
+                gsc_map_90 = _to_map(upload)
+                gsc_map_365 = _to_map(upload_12) if upload_12 else gsc_map_90
+            except Exception as e:
+                job["gsc_error"] = "uploaded GSC data: " + str(e)[:200]
+        elif params.get("include_gsc"):
             job["phase"] = "gsc"
             try:
                 from concurrent.futures import ThreadPoolExecutor
@@ -293,6 +310,8 @@ def start():
         "max_pages": max_pages,
         "workers": int(data.get("workers", 16)),
         "include_gsc": bool(data.get("include_gsc")),
+        "gsc_upload": data.get("gsc_upload"),       # rows from an uploaded GSC CSV
+        "gsc_upload_12": data.get("gsc_upload_12"),
         "gsc_property": origin,
         "path_filter": scope_path,
     }
