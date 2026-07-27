@@ -83,6 +83,7 @@
       <div class="full">
         <label>Input source</label>
         <select id="input_mode">
+          <option value="default">Invensis live blogs &amp; courses (pre-loaded)</option>
           <option value="url">URL — crawl the site by following links</option>
           <option value="sitemap">XML sitemap — audit every URL in a sitemap</option>
           <option value="csv">CSV upload — audit a list of URLs from a file</option>
@@ -90,7 +91,10 @@
         </select>
       </div>
     </div>
-    <div class="row in-src" id="in_url"><div class="full"><label>Start URL</label>
+    <div class="row in-src" id="in_default"><div class="full">
+      <div class="hint" id="default_info" style="font-size:13px;color:var(--muted)">Loading the pre-built list of live blogs &amp; courses…</div>
+    </div></div>
+    <div class="row in-src" id="in_url" style="display:none"><div class="full"><label>Start URL</label>
       <input type="text" id="start_url" value="https://www.invensislearning.com/">
       <div class="hint">Use the root to crawl everything, or a section path to scope it.</div></div></div>
     <div class="row in-src" id="in_sitemap" style="display:none"><div class="full"><label>Sitemap URL</label>
@@ -109,7 +113,7 @@
       <div class="hint" id="gsc_csv_12_info"></div>
     </div></div>
     <div class="row">
-      <div><label>Max URLs (up to 15000)</label><input type="number" id="max_pages" value="200" min="1" max="15000"></div>
+      <div><label>Max URLs (up to 15000)</label><input type="number" id="max_pages" value="500" min="1" max="15000"></div>
       <div><label>&nbsp;</label><button class="btn" id="runBtn">Run Meta Audit</button></div>
     </div>
     <div class="err" id="cfgErr"></div>
@@ -199,6 +203,17 @@ hookGsc("gsc_csv_12","gsc_csv_12_info",r=>gscRows12=r);
 let csvUrls=[];
 $("input_mode").addEventListener("change",()=>{const m=$("input_mode").value;
   document.querySelectorAll(".in-src").forEach(e=>e.style.display="none");$("in_"+m).style.display="";});
+
+// pre-built default list of live blogs & courses (loaded once from the sitemap)
+let DEFAULT_URLS=[];
+(async()=>{
+  try{ const d=await (await fetch("/api/default_urls")).json();
+    DEFAULT_URLS=d.all||[];
+    $("default_info").innerHTML="Audits the pre-loaded list of <b>"+(d.courses||[]).length
+      +" live courses</b> and <b>"+(d.blogs||[]).length+" live blogs</b> ("+DEFAULT_URLS.length
+      +" URLs), built once from the sitemap. Upload GSC data below to add traffic.";
+  }catch(e){ $("default_info").textContent="Default list unavailable — choose another input source."; }
+})();
 function extractUrls(t){const f=t.match(/https?:\/\/[^\s,"'<>]+/g)||[];return[...new Set(f.map(u=>u.replace(/[)>\].,;]+$/,"")))];}
 $("csv_file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{csvUrls=extractUrls(r.result);$("csv_info").textContent=csvUrls.length+" URL(s) found in "+f.name;};r.readAsText(f);});
@@ -212,7 +227,11 @@ $("runBtn").onclick=async()=>{
   $("cfgErr").style.display="none";
   const mode=$("input_mode").value;
   const body={input_mode:mode,max_pages:$("max_pages").value,workers:16,include_gsc:false};
-  if(mode==="url")body.start_url=$("start_url").value;
+  if(mode==="default"){
+    if(!DEFAULT_URLS.length){$("cfgErr").textContent="Default list not loaded yet — wait a second and retry.";$("cfgErr").style.display="block";return;}
+    body.input_mode="paste"; body.url_list=DEFAULT_URLS;
+  }
+  else if(mode==="url")body.start_url=$("start_url").value;
   else if(mode==="sitemap")body.sitemap_url=$("sitemap_url").value;
   else if(mode==="csv"){if(!csvUrls.length){$("cfgErr").textContent="Upload a file with URLs first.";$("cfgErr").style.display="block";return;}body.url_list=csvUrls;}
   else if(mode==="paste")body.url_list=extractUrls($("paste_urls").value);

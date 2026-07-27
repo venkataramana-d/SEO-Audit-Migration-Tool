@@ -192,6 +192,16 @@ def meta_page():
     return render_template("meta.html")
 
 
+@app.route("/api/default_urls")
+def default_urls():
+    """Pre-built list of the site's live blogs & courses (from the sitemap)."""
+    try:
+        with open(os.path.join(BASE_DIR, "default_urls.json")) as f:
+            return jsonify(json.load(f))
+    except (FileNotFoundError, ValueError):
+        return jsonify({"all": [], "courses": [], "blogs": []})
+
+
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     s = load_settings()
