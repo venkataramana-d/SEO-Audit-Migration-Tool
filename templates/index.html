@@ -205,20 +205,18 @@ https://www.invensislearning.com/pmp-certification-training/"></textarea>
         <div class="hint">Higher = faster crawl (more parallel requests). 12 is a good balance.</div>
       </div>
     </div>
-    <div class="row" id="gscrow">
+    <!-- GSC option hidden for now (code kept for later) -->
+    <div class="row" id="gscrow" style="display:none">
       <label class="check full">
-        <input type="checkbox" id="include_gsc" checked>
+        <input type="checkbox" id="include_gsc">
         <span>Include Google Search Console data (flags top pages by clicks/impressions).</span>
       </label>
     </div>
-    <div class="row">
+    <div class="row" style="display:none">
       <div class="full">
         <label>GSC data source</label>
-        <div class="hint" style="margin-bottom:8px">Live API (uses your login — local only) <b>or</b> upload a GSC CSV export below (no login, works anywhere).</div>
-        <label style="font-size:12px">Upload GSC “Pages” CSV — last 3 months (optional)</label>
         <input type="file" id="gsc_csv" accept=".csv">
-        <div class="hint" id="gsc_csv_info">Search Console → Performance → export → open the Pages sheet → save as CSV.</div>
-        <label style="font-size:12px;margin-top:10px">Upload GSC “Pages” CSV — last 12 months (optional)</label>
+        <div class="hint" id="gsc_csv_info"></div>
         <input type="file" id="gsc_csv_12" accept=".csv">
         <div class="hint" id="gsc_csv_12_info"></div>
       </div>

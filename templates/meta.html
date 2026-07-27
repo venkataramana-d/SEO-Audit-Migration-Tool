@@ -103,12 +103,10 @@
       <input type="file" id="csv_file" accept=".csv,.txt"><div class="hint" id="csv_info">One URL per row. Parsed in your browser.</div></div></div>
     <div class="row in-src" id="in_paste" style="display:none"><div class="full"><label>Paste URLs (one per line)</label>
       <textarea id="paste_urls" rows="6" placeholder="https://www.invensislearning.com/blog/..."></textarea></div></div>
-    <div class="row"><div class="full">
-      <label>GSC data (optional — upload CSV, no login needed)</label>
-      <label style="font-size:12px;color:var(--muted)">Pages CSV — last 3 months</label>
+    <!-- GSC upload hidden for now (code kept for later) -->
+    <div class="row" style="display:none"><div class="full">
       <input type="file" id="gsc_csv" accept=".csv">
-      <div class="hint" id="gsc_csv_info">Search Console → Performance → Pages → Export → save the Pages sheet as CSV.</div>
-      <label style="font-size:12px;color:var(--muted);margin-top:8px">Pages CSV — last 12 months (optional)</label>
+      <div class="hint" id="gsc_csv_info"></div>
       <input type="file" id="gsc_csv_12" accept=".csv">
       <div class="hint" id="gsc_csv_12_info"></div>
     </div></div>
