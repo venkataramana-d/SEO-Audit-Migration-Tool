@@ -61,12 +61,24 @@
   <div class="card">
     <h2>Google Search Console</h2>
     {% if gsc_connected %}
-      <div class="status ok"><span class="dot ok"></span> Connected</div>
+      <div class="status ok"><span class="dot ok"></span> Connected
+        {% if gsc_kind == 'service_account' %}(service account — permanent){% else %}(OAuth){% endif %}
+      </div>
       <p class="props">Traffic data is available. Tick “Include GSC” on the Site Audit tab to flag your top pages.</p>
     {% else %}
       <div class="status no"><span class="dot no"></span> Not connected</div>
-      <p class="props">Run <code>python gsc_auth.py</code> once in the tool folder to authorize, then reload this page.</p>
     {% endif %}
+
+    <p class="lede" style="margin:14px 0 4px"><b>Recommended: connect with a Service Account</b> (a JSON key file — no API key exists for GSC, and this never expires or needs a browser login).</p>
+    <ol>
+      <li>Google Cloud → your project → <b>IAM &amp; Admin → Service Accounts → Create service account</b>.</li>
+      <li>Open it → <b>Keys → Add key → Create new key → JSON</b> (a file downloads).</li>
+      <li>Save that file as <code>service_account.json</code> in the folder <code>{{ sa_path }}</code>.</li>
+      <li>Copy the service account’s email (<code>…@….iam.gserviceaccount.com</code>) and in
+          <b>Search Console → Settings → Users &amp; permissions → Add user</b>, paste it with <b>Full</b> access.</li>
+      <li>Reload this page — it’ll show “service account (permanent)”. Verify with <code>python gsc_verify.py</code>.</li>
+    </ol>
+    <p class="props">The OAuth method (<code>python gsc_auth.py</code>) also works and is currently active if no service-account file is present.</p>
   </div>
 
   <div class="card">

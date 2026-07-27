@@ -34,6 +34,9 @@ app.jinja_env.auto_reload = True
 JOBS = {}
 CLIENT_FILE = os.path.join(BASE_DIR, "..", "oauth_client.json")
 TOKEN_FILE = os.path.join(BASE_DIR, "..", "token.json")
+# drop a Google service-account key here to connect GSC permanently (no browser,
+# no expiry). Takes priority over OAuth when present.
+SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, "..", "service_account.json")
 SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
 
@@ -126,7 +129,8 @@ def run_job(job_id, params):
                     return gsc.top_pages(
                         site_url=params["gsc_property"], client_file=CLIENT_FILE,
                         token_file=TOKEN_FILE, days=days,
-                        path_filter=params.get("path_filter"))
+                        path_filter=params.get("path_filter"),
+                        sa_file=SERVICE_ACCOUNT_FILE)
 
                 # fetch the 3-month and 12-month windows concurrently (was ~8s serial)
                 with ThreadPoolExecutor(max_workers=2) as gex:
@@ -179,9 +183,10 @@ def settings():
         s["pagespeed_api_key"] = (request.form.get("pagespeed_api_key") or "").strip()
         save_settings(s)
         saved = True
-    gsc_connected = os.path.exists(TOKEN_FILE)
+    kind = gsc.connection_kind(CLIENT_FILE, TOKEN_FILE, SERVICE_ACCOUNT_FILE)
     return render_template("settings.html", settings=s, saved=saved,
-                           gsc_connected=gsc_connected,
+                           gsc_connected=bool(kind), gsc_kind=kind,
+                           sa_path=SERVICE_ACCOUNT_FILE,
                            client_exists=os.path.exists(CLIENT_FILE))
 
 

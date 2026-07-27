@@ -2,6 +2,7 @@
 settings.json
 token.json
 oauth_client.json
+service_account.json
 client_secret*.json
 *.key
 .env
