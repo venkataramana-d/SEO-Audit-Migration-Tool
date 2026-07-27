@@ -6,75 +6,104 @@
 <title>Redirect Validation — SEO Migration Toolkit</title>
 <style>
   :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
-    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
+    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
+    --shadow:0 8px 28px rgba(30,45,90,.07);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.5}
-  .wrap{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
-  .topnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
+    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
+    color:var(--ink);min-height:100vh;line-height:1.5}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 22px 90px}
+  .topnav{display:flex;align-items:center;gap:6px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .topnav .brand{font-weight:800;font-size:14px;margin-right:14px;letter-spacing:-.01em}
   .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px}
   .navlink:hover{color:var(--ink);background:var(--card2)}
   .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  h1{font-size:25px;margin:0 0 4px;letter-spacing:-.02em}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 18px;max-width:76ch}
   .subtabs{display:flex;gap:8px;margin:0 0 20px;flex-wrap:wrap}
-  .subtab{font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:10px;text-decoration:none;
-    color:var(--muted);background:var(--card2);border:1px solid var(--line)}
-  .subtab:hover{color:var(--ink)}
-  .subtab.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));border-color:transparent}
-  h1{font-size:24px;margin:0 0 4px}
-  .lede{color:var(--muted);font-size:14px;margin:0 0 22px;max-width:74ch}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
-  .card h2{font-size:13px;margin:0 0 16px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+  .subtab{font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:10px;text-decoration:none;color:var(--muted);background:var(--card2);border:1px solid var(--line)}
+  .subtab:hover{color:var(--ink)} .subtab.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));border-color:transparent}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow)}
+  .card h2{font-size:12px;margin:0 0 15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
   label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
-  input[type=text],input[type=number],select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
-  input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+  input[type=text],input[type=number],select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit;transition:.12s}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(58,107,255,.12)}
   input[type=file]{background:none;border:none;padding:8px 0;font-size:13px;color:var(--muted)}
   .row{margin-bottom:16px}
   .hint{font-size:12px;color:var(--grey);margin-top:5px}
-  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;border-radius:11px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer}
-  .btn:disabled{opacity:.5}
-  .btn.ghost{background:var(--card2);color:var(--muted);font-size:13px;padding:9px 16px}
-  .err{background:rgba(214,69,80,.1);border:1px solid var(--red);color:#b23;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
+  .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;border-radius:11px;padding:12px 26px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(58,107,255,.28);transition:.14s}
+  .btn:hover{transform:translateY(-1px)} .btn:disabled{opacity:.55;transform:none;box-shadow:none}
+  .btn.ghost{background:var(--card2);color:var(--muted);box-shadow:none;font-size:13px;padding:9px 15px}
+  .btn.ghost:hover{color:var(--ink)}
+  .err{background:rgba(224,71,90,.1);border:1px solid var(--red);color:#b23145;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
   #panel{display:none}
-  .phase{font-size:13px;color:var(--muted);margin-bottom:6px}
-  .bar{height:8px;background:var(--card2);border-radius:8px;overflow:hidden;margin-bottom:6px}
+  .runbar{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .bar{height:8px;background:var(--card2);border-radius:8px;overflow:hidden}
   .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--green));transition:width .3s}
-  /* dashboard */
-  .dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px}
-  .tile{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
-  .tile b{display:block;font-size:22px;letter-spacing:-.02em}.tile small{color:var(--muted);font-size:11px}
-  .tile.pass b{color:var(--green)} .tile.fail b{color:var(--red)} .tile.warn b{color:var(--amber)}
-  .score{display:flex;align-items:center;gap:16px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:16px}
-  .score .num{font-size:40px;font-weight:800;line-height:1}
-  .score .lbl{font-size:13px;color:var(--muted)}
-  .recs{font-size:13px;color:var(--ink)} .recs li{margin-bottom:3px}
+  .cur{font-size:12px;color:var(--grey);margin-top:6px;min-height:15px;word-break:break-all}
+  /* hero dashboard */
+  .hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+  @media(max-width:640px){.hero{grid-template-columns:1fr}}
+  .gauge{position:relative;width:132px;height:132px;flex-shrink:0}
+  .gauge text{fill:var(--ink)}
+  .gaugeLbl{text-align:center;font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+  .heroRight{min-width:0}
+  .distrib{height:14px;border-radius:8px;overflow:hidden;display:flex;background:var(--card2);margin-bottom:8px}
+  .distrib i{height:100%}
+  .distrib .p{background:var(--green)} .distrib .f{background:var(--red)}
+  .distLbl{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap}
+  .distLbl b{color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:9px}
+  .tile{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 8px;text-align:center}
+  .tile b{display:block;font-size:20px;letter-spacing:-.02em}.tile small{color:var(--muted);font-size:10.5px}
+  .tile.g b{color:var(--green)} .tile.r b{color:var(--red)} .tile.a b{color:var(--amber)}
+  /* fix-first */
+  .fix{display:flex;flex-direction:column;gap:8px}
+  .fixrow{display:flex;align-items:center;gap:12px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 14px;font-size:13.5px}
+  .fixrow .cnt{font-weight:800;font-size:18px;min-width:34px}
+  .fixrow.crit{border-left:4px solid var(--red)} .fixrow.crit .cnt{color:var(--red)}
+  .fixrow.high{border-left:4px solid var(--amber)} .fixrow.high .cnt{color:var(--amber)}
+  .fixrow.med{border-left:4px solid var(--brand)} .fixrow.med .cnt{color:var(--brand)}
+  .fixrow.ok{border-left:4px solid var(--green)} .fixrow.ok .cnt{color:var(--green)}
+  .fixrow .act{color:var(--brand);font-weight:600;margin-left:auto;cursor:pointer;font-size:12.5px}
   /* filters + table */
   .filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
   .filters input[type=text]{flex:1;min-width:150px}
   .filters button{font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
-  .filters button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .filters button:hover{color:var(--ink)} .filters button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
   .rcount{font-size:12px;color:var(--muted);margin-left:auto}
+  .tools{display:flex;gap:9px;margin-bottom:10px;flex-wrap:wrap}
   .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
-  .tbl th{text-align:left;color:var(--muted);font-weight:700;padding:9px 8px;border-bottom:2px solid var(--line);white-space:nowrap}
+  .tbl th{text-align:left;color:var(--muted);font-weight:700;padding:9px 8px;border-bottom:2px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--card)}
   .tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-  .u{word-break:break-all;max-width:230px}
-  .pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap}
-  .p-pass{background:rgba(31,157,107,.15);color:var(--green)}
-  .p-fail{background:rgba(214,69,80,.15);color:var(--red)}
+  .tbl tr.rrow:hover{background:var(--card2)}
+  .u{word-break:break-all;max-width:220px}
+  .pill{font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;white-space:nowrap}
+  .p-pass{background:rgba(18,160,106,.14);color:var(--green)} .p-fail{background:rgba(224,71,90,.14);color:var(--red)}
   .st-ok{color:var(--green);font-weight:700}.st-bad{color:var(--red);font-weight:700}.st-warn{color:var(--amber);font-weight:700}
-  .rtype{font-weight:700}
-  .caret{cursor:pointer;color:var(--brand);font-weight:700}
-  .detail{display:none;background:var(--card2)}
-  .detail td{padding:12px 14px}
-  .hop{font-family:ui-monospace,monospace;font-size:12px;padding:3px 0}
-  .hop .code{display:inline-block;min-width:42px;font-weight:700}
+  .badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px}
+  .b301{background:rgba(18,160,106,.14);color:var(--green)} .b302{background:rgba(217,138,0,.16);color:var(--amber)}
+  .bnone{color:var(--grey)}
+  .caret{cursor:pointer;color:var(--brand);font-weight:800;user-select:none}
+  .detail{display:none;background:linear-gradient(180deg,var(--card2),#fff)}
+  .detail td{padding:14px 16px}
+  .chainviz{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
+  .node{font-family:ui-monospace,monospace;font-size:11.5px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 10px;max-width:340px;word-break:break-all}
+  .node .sc{font-weight:800;margin-right:6px}
+  .arrow{color:var(--muted);font-weight:800;font-size:13px}
+  .arrow small{font-size:10px;display:block;text-align:center;color:var(--brand)}
   .issue{font-size:12.5px;padding:3px 0}
   .sev{font-size:10px;font-weight:800;padding:1px 7px;border-radius:5px;margin-right:6px}
   .sev.Critical{background:var(--red);color:#fff}.sev.High{background:var(--amber);color:#241800}
   .sev.Medium{background:var(--brand);color:#fff}.sev.Low{background:var(--grey);color:#fff}
+  .empty{color:var(--muted);padding:30px;text-align:center;font-size:14px}
+  @media print{.topnav,.subtabs,#config,.filters,.tools,.caret,.runbar,.bar,.cur{display:none!important}
+    body{background:#fff}.card{box-shadow:none;border-color:#ccc} .detail{display:table-row!important}}
 </style>
 </head>
 <body>
@@ -88,14 +117,14 @@
   </nav>
 
   <h1>Redirect Validation</h1>
-  <p class="lede">Validate redirects for a migration: follow every redirect, compare the final landing page to the expected destination, and flag chains, loops, broken finals, canonical &amp; indexability issues, HTTPS, and slow redirects.</p>
+  <p class="lede">Follow every redirect, compare the final landing page to the expected destination, and flag chains, loops, broken finals, canonical &amp; indexability issues, HTTPS and slow redirects — with a live health score.</p>
 
   <div class="subtabs">
     <a class="subtab" href="/">Crawl &amp; Audit</a>
     <a class="subtab active" href="/redirects">Redirect Validation</a>
   </div>
 
-  <div class="card">
+  <div class="card" id="config">
     <h2>Input</h2>
     <div class="row">
       <label>Input source</label>
@@ -133,7 +162,7 @@
     <div class="row in-src" id="in_sitemap" style="display:none">
       <label>Sitemap URL</label>
       <input type="text" id="sitemap_url" placeholder="https://www.invensislearning.com/sitemap.xml">
-      <div class="hint" id="sitemap_info">Every URL in the sitemap is checked for redirects (no expected destination).</div>
+      <div class="hint" id="sitemap_info">Every URL in the sitemap is checked for redirects.</div>
     </div>
     <div class="row in-src" id="in_manual" style="display:none">
       <label>Source URL</label>
@@ -150,42 +179,66 @@
   </div>
 
   <div class="card" id="panel">
-    <div class="phase" id="phaseTxt">Starting…</div>
+    <div class="runbar"><span class="dot" id="dot"></span><span id="phaseTxt">Starting…</span></div>
     <div class="bar"><i id="barFill"></i></div>
-    <div class="hint" id="curUrl"></div>
+    <div class="cur" id="curUrl"></div>
 
     <div id="results" style="display:none">
-      <div class="score">
-        <div><div class="num" id="scoreNum">–</div><div class="lbl" id="scoreLbl">SEO redirect health</div></div>
-        <div class="recs"><b style="font-size:12px;color:var(--muted)">TOP RECOMMENDATIONS</b><ul id="recs" style="margin:6px 0 0;padding-left:18px"></ul></div>
+      <div class="card" style="box-shadow:none;border:1px solid var(--line);margin:16px 0 0;background:linear-gradient(180deg,#fff,#fafbff)">
+        <div class="hero">
+          <div>
+            <div class="gauge">
+              <svg viewBox="0 0 132 132" width="132" height="132">
+                <circle cx="66" cy="66" r="56" fill="none" stroke="var(--card2)" stroke-width="13"/>
+                <circle id="gaugeArc" cx="66" cy="66" r="56" fill="none" stroke="var(--green)" stroke-width="13"
+                  stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" transform="rotate(-90 66 66)" style="transition:stroke-dashoffset .5s,stroke .3s"/>
+                <text id="gaugeNum" x="66" y="70" text-anchor="middle" font-size="34" font-weight="800">–</text>
+                <text x="66" y="90" text-anchor="middle" font-size="10" fill="#8a93ab">/ 100</text>
+              </svg>
+            </div>
+            <div class="gaugeLbl" id="gaugeLbl">Redirect health</div>
+          </div>
+          <div class="heroRight">
+            <div class="distrib" id="distrib"></div>
+            <div class="distLbl" id="distLbl"></div>
+            <div class="tiles" id="tiles"></div>
+          </div>
+        </div>
       </div>
-      <div class="dash" id="dash"></div>
 
-      <div class="filters">
-        <input type="text" id="fSearch" placeholder="Search URL…">
-        <button data-f="all" class="on">All</button>
-        <button data-f="pass">Passed</button>
-        <button data-f="fail">Failed</button>
-        <button data-f="301">301</button>
-        <button data-f="302">302</button>
-        <button data-f="404">404</button>
-        <button data-f="chain">Chains</button>
-        <button data-f="loop">Loops</button>
-        <button data-f="canon">Canonical</button>
-        <button data-f="noindex">Noindex</button>
-        <button data-f="slow">Slow</button>
-        <button data-f="https">HTTPS</button>
-        <span class="rcount" id="rCount"></span>
+      <div class="card" style="box-shadow:none;border:1px solid var(--line)">
+        <h2>Fix first — prioritized</h2>
+        <div class="fix" id="fix"></div>
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        <a class="btn ghost" id="expCsv" href="#">⬇ Export CSV</a>
-        <a class="btn ghost" id="expXlsx" href="#">⬇ Export Excel</a>
-      </div>
-      <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th></th><th>Source URL</th><th>Expected</th><th>Actual final URL</th><th>Type</th><th>Chain</th><th>Final</th><th>Canonical</th><th>Index</th><th>Speed</th><th>Result</th></tr></thead>
-        <tbody id="tb"></tbody>
-      </table>
+
+      <div class="card" style="box-shadow:none;border:1px solid var(--line)">
+        <div class="filters">
+          <input type="text" id="fSearch" placeholder="Search URL…">
+          <button data-f="all" class="on">All</button>
+          <button data-f="fail">Failed</button>
+          <button data-f="pass">Passed</button>
+          <button data-f="301">301</button>
+          <button data-f="302">302</button>
+          <button data-f="404">404</button>
+          <button data-f="chain">Chains</button>
+          <button data-f="loop">Loops</button>
+          <button data-f="canon">Canonical</button>
+          <button data-f="noindex">Noindex</button>
+          <button data-f="slow">Slow</button>
+          <button data-f="https">HTTPS</button>
+          <span class="rcount" id="rCount"></span>
+        </div>
+        <div class="tools">
+          <a class="btn ghost" id="expCsv" href="#">⬇ CSV</a>
+          <a class="btn ghost" id="expXlsx" href="#">⬇ Excel</a>
+          <button class="btn ghost" onclick="window.print()">🖶 Print / PDF</button>
+        </div>
+        <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th></th><th>Source URL</th><th>Expected</th><th>Actual final URL</th><th>Type</th><th>Chain</th><th>Final</th><th>Canon</th><th>Index</th><th>Speed</th><th>Result</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+        </div>
       </div>
     </div>
   </div>
@@ -194,83 +247,55 @@
 <script>
 const $=id=>document.getElementById(id);
 let jobId=null, poll=null, RES=[], SUMM=null, FILT="all";
-
 function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function nf(n){return (n||0).toLocaleString();}
+
 $("input_mode").addEventListener("change",()=>{const m=$("input_mode").value;
   document.querySelectorAll(".in-src").forEach(e=>e.style.display="none");$("in_"+m).style.display="";});
 
-// ---- CSV parsing ----
+// ---- CSV / xlsx / paste input parsing ----
 function csvToRows(t){const rows=[];let row=[],f="",q=false;
   for(let i=0;i<t.length;i++){const c=t[i];
     if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
     else if(c==='"')q=true; else if(c===","){row.push(f);f="";}
     else if(c==="\n"){row.push(f);rows.push(row);row=[];f="";} else if(c!=="\r")f+=c;}
   if(f.length||row.length){row.push(f);rows.push(row);} return rows;}
-function pairsFromRows(rows){
-  if(!rows.length)return[];
-  let start=0;
-  if(!/https?:\/\//.test((rows[0][0]||"")))start=1; // skip header row
-  const out=[];
-  for(let i=start;i<rows.length;i++){const r=rows[i];if(!r)continue;
-    const src=(r[0]||"").trim(); if(!/https?:\/\//.test(src))continue;
-    const exp=(r[1]||"").trim();
-    out.push({source:src,expected:/https?:\/\//.test(exp)?exp:""});}
-  return out;}
+function pairsFromRows(rows){if(!rows.length)return[];let s=0;if(!/https?:\/\//.test((rows[0][0]||"")))s=1;
+  const out=[];for(let i=s;i<rows.length;i++){const r=rows[i];if(!r)continue;const src=(r[0]||"").trim();
+    if(!/https?:\/\//.test(src))continue;const exp=(r[1]||"").trim();out.push({source:src,expected:/https?:\/\//.test(exp)?exp:""});}return out;}
 let csvPairs=[], xlsxPairs=[];
-$("csv_file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
-  const rd=new FileReader();rd.onload=()=>{csvPairs=pairsFromRows(csvToRows(rd.result));
-    $("csv_info").textContent=csvPairs.length+" source URL(s) from "+f.name;};rd.readAsText(f);});
-$("xlsx_file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;
-  $("xlsx_info").textContent="Parsing "+f.name+"…";
+$("csv_file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{csvPairs=pairsFromRows(csvToRows(rd.result));$("csv_info").textContent=csvPairs.length+" source URL(s) from "+f.name;};rd.readAsText(f);});
+$("xlsx_file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;$("xlsx_info").textContent="Parsing "+f.name+"…";
   const fd=new FormData();fd.append("file",f);
-  try{const d=await(await fetch("/api/redirects/upload_xlsx",{method:"POST",body:fd})).json();
-    xlsxPairs=d.pairs||[];$("xlsx_info").textContent=(d.error?d.error:xlsxPairs.length+" source URL(s) from "+f.name);}
+  try{const d=await(await fetch("/api/redirects/upload_xlsx",{method:"POST",body:fd})).json();xlsxPairs=d.pairs||[];
+    $("xlsx_info").textContent=(d.error?d.error:xlsxPairs.length+" source URL(s) from "+f.name);}
   catch(err){$("xlsx_info").textContent="Failed to parse: "+err.message;}});
-
-function pastePairs(text){
-  return text.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
-    const parts=l.split(/[,\t]/).map(x=>x.trim());
-    const src=parts.find(x=>/https?:\/\//.test(x))||parts[0];
-    const exp=parts.filter(x=>/https?:\/\//.test(x))[1]||"";
-    return {source:src,expected:exp};
-  }).filter(p=>/https?:\/\//.test(p.source));
-}
+function pastePairs(text){return text.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+  const parts=l.split(/[,\t]/).map(x=>x.trim());const src=parts.find(x=>/https?:\/\//.test(x))||parts[0];
+  const exp=parts.filter(x=>/https?:\/\//.test(x))[1]||"";return {source:src,expected:exp};}).filter(p=>/https?:\/\//.test(p.source));}
 
 async function startJob(body){
   const r=await fetch("/api/redirects/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  const j=await r.json();
-  if(j.error){err(j.error);return;}
-  jobId=j.job_id;
-  $("runBtn").disabled=true;$("stopBtn").style.display="inline-block";
-  $("panel").style.display="block";$("results").style.display="none";
+  const j=await r.json();if(j.error){err(j.error);return;}
+  jobId=j.job_id;$("runBtn").disabled=true;$("stopBtn").style.display="inline-block";
+  $("dot").style.animation="";$("panel").style.display="block";$("results").style.display="none";
   poll=setInterval(tick,700);
 }
-
 $("runBtn").onclick=async()=>{
-  $("cfgErr").style.display="none";
-  const mode=$("input_mode").value;
-  // crawl mode runs the crawl server-side, then validates the discovered URLs
-  if(mode==="crawl"){
-    const su=$("crawl_url").value.trim();
-    if(!/https?:\/\//.test(su)){err("Enter a valid website URL to crawl.");return;}
-    await startJob({crawl:{start_url:su, max_pages:$("crawl_max").value||200}});
-    return;
-  }
+  $("cfgErr").style.display="none";const mode=$("input_mode").value;
+  if(mode==="crawl"){const su=$("crawl_url").value.trim();if(!/https?:\/\//.test(su)){err("Enter a valid website URL to crawl.");return;}
+    await startJob({crawl:{start_url:su,max_pages:$("crawl_max").value||200}});return;}
   let pairs=[];
   if(mode==="paste")pairs=pastePairs($("paste_urls").value);
   else if(mode==="csv")pairs=csvPairs;
   else if(mode==="xlsx")pairs=xlsxPairs;
-  else if(mode==="manual"){const s=$("manual_source").value.trim();
-    if(/https?:\/\//.test(s))pairs=[{source:s,expected:$("manual_expected").value.trim()}];}
-  else if(mode==="sitemap"){
-    const sm=$("sitemap_url").value.trim();
-    if(!/https?:\/\//.test(sm)){err("Enter a valid sitemap URL.");return;}
+  else if(mode==="manual"){const s=$("manual_source").value.trim();if(/https?:\/\//.test(s))pairs=[{source:s,expected:$("manual_expected").value.trim()}];}
+  else if(mode==="sitemap"){const sm=$("sitemap_url").value.trim();if(!/https?:\/\//.test(sm)){err("Enter a valid sitemap URL.");return;}
     $("loadInfo").textContent="Reading sitemap…";
     try{const d=await(await fetch("/api/redirects/sitemap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sitemap_url:sm})}).then(r=>r.json()));
-      if(d.error){err(d.error);return;} pairs=(d.urls||[]).map(u=>({source:u,expected:""}));
-      $("loadInfo").textContent=pairs.length+" URLs from sitemap";}
-    catch(e2){err("Sitemap error: "+e2.message);return;}
-  }
+      if(d.error){err(d.error);return;}pairs=(d.urls||[]).map(u=>({source:u,expected:""}));$("loadInfo").textContent=pairs.length+" URLs from sitemap";}
+    catch(e2){err("Sitemap error: "+e2.message);return;}}
   if(!pairs.length){err("No valid source URLs found for this input.");return;}
   await startJob({pairs});
 };
@@ -283,84 +308,84 @@ async function tick(){
   $("phaseTxt").textContent=(PH[p.phase]||p.phase)+(p.found?" ("+p.crawled+"/"+p.found+")":"");
   $("barFill").style.width=(p.found?Math.round(p.crawled/p.found*100):(p.done?100:5))+"%";
   $("curUrl").textContent=p.current?"→ "+p.current:"";
-  if(p.error)$("phaseTxt").textContent="Error: "+p.error;
-  if(p.done){clearInterval(poll);$("runBtn").disabled=false;$("stopBtn").style.display="none";await load();}
+  if(p.error){$("phaseTxt").textContent="Error: "+p.error;}
+  // live-stream results as they validate
+  if(p.phase==="validating"||p.done){await load(p.done);}
+  if(p.done){clearInterval(poll);$("runBtn").disabled=false;$("stopBtn").style.display="none";$("dot").style.animation="none";}
 }
-async function load(){
+async function load(final){
   const d=await(await fetch("/api/redirects/results/"+jobId)).json();
   RES=d.results||[];SUMM=d.summary||{};
   $("expCsv").href="/api/redirects/export/"+jobId+"?fmt=csv";
   $("expXlsx").href="/api/redirects/export/"+jobId+"?fmt=xlsx";
-  renderDash();render();
-  $("results").style.display="block";
+  if(RES.length||final){renderDash();render();$("results").style.display="block";}
 }
 
+const C=351.9;
 function renderDash(){
-  const s=SUMM;
-  const sc=s.health_score;
-  $("scoreNum").textContent=sc; $("scoreNum").style.color=sc>=80?"var(--green)":(sc>=50?"var(--amber)":"var(--red)");
-  $("scoreLbl").textContent="SEO redirect health — "+(sc>=80?"Good":(sc>=50?"Needs work":"Poor"));
-  const recs=[];
-  if(s.loops)recs.push(s.loops+" redirect loop(s) — fix immediately (Critical)");
-  if(s.broken)recs.push(s.broken+" redirect(s) end on a broken/error page");
-  if(s.wrong_landing)recs.push(s.wrong_landing+" land on the wrong page vs expected");
-  if(s.chains)recs.push(s.chains+" chain(s) — redirect straight to the final URL");
-  if(s.temporary)recs.push(s.temporary+" temporary (302/307) — switch to 301 for migration");
-  if(s.canonical_errors)recs.push(s.canonical_errors+" canonical mismatch(es)");
-  if(s.non_indexable)recs.push(s.non_indexable+" final page(s) are noindex");
-  if(!recs.length)recs.push("All redirects look healthy ✓");
-  $("recs").innerHTML=recs.slice(0,6).map(r=>"<li>"+esc(r)+"</li>").join("");
-  $("dash").innerHTML=[
-    ["total","Total URLs",s.total],["pass","Passed",s.passed],["fail","Failed",s.failed],
-    ["warn","Chains",s.chains],["fail","Loops",s.loops],["fail","Broken",s.broken],
-    ["fail","Wrong landing",s.wrong_landing],["warn","Canonical errors",s.canonical_errors],
-    ["warn","Non-indexable",s.non_indexable],["warn","Slow",s.slow],
-    ["total","Avg speed",s.avg_speed_ms+" ms"]
-  ].map(([cls,lbl,v])=>'<div class="tile '+cls+'"><b>'+v+'</b><small>'+lbl+'</small></div>').join("");
+  const s=SUMM;const sc=s.health_score||0;
+  const col=sc>=80?"var(--green)":(sc>=50?"var(--amber)":"var(--red)");
+  $("gaugeArc").style.strokeDashoffset=C*(1-sc/100);$("gaugeArc").style.stroke=col;
+  $("gaugeNum").textContent=sc;$("gaugeNum").setAttribute("fill",col.includes("green")?"#12a06a":col.includes("amber")?"#d98a00":"#e0475a");
+  $("gaugeLbl").textContent=sc>=80?"Healthy":(sc>=50?"Needs work":"Poor");
+  const tot=s.total||1,pw=Math.round((s.passed||0)/tot*100),fw=100-pw;
+  $("distrib").innerHTML='<i class="p" style="width:'+pw+'%"></i><i class="f" style="width:'+fw+'%"></i>';
+  $("distLbl").innerHTML='<span><b>'+nf(s.passed)+'</b> passed</span><span><b>'+nf(s.failed)+'</b> failed</span><span>Avg speed <b>'+nf(s.avg_speed_ms)+' ms</b></span>';
+  $("tiles").innerHTML=[
+    ["","Total",s.total],["a","Chains",s.chains],["r","Loops",s.loops],["r","Broken",s.broken],
+    ["r","Wrong landing",s.wrong_landing],["a","Canonical",s.canonical_errors],["a","Noindex",s.non_indexable],
+    ["a","Temp 302",s.temporary],["a","Slow",s.slow]
+  ].map(([c,l,v])=>'<div class="tile '+c+'"><b>'+nf(v)+'</b><small>'+l+'</small></div>').join("");
+  // fix-first
+  const F=[];
+  if(s.loops)F.push(["crit",s.loops,"Redirect loops — fix immediately","loop"]);
+  if(s.broken)F.push(["crit",s.broken,"Redirects ending on a broken/error page","404"]);
+  if(s.wrong_landing)F.push(["high",s.wrong_landing,"Land on the wrong page vs expected","fail"]);
+  if(s.temporary)F.push(["high",s.temporary,"Temporary (302/307) — switch to 301","302"]);
+  if(s.chains)F.push(["med",s.chains,"Redirect chains — point straight to the final URL","chain"]);
+  if(s.canonical_errors)F.push(["med",s.canonical_errors,"Canonical mismatches","canon"]);
+  if(s.non_indexable)F.push(["high",s.non_indexable,"Final pages are noindex","noindex"]);
+  if(!F.length)F.push(["ok","✓","All redirects look healthy",""]);
+  $("fix").innerHTML=F.map(([c,n,t,f])=>'<div class="fixrow '+c+'"><span class="cnt">'+nf(n)+'</span><span>'+esc(t)+'</span>'+(f?'<span class="act" onclick="jump(\''+f+'\')">view →</span>':'')+'</div>').join("");
 }
+function jump(f){const b=document.querySelector('.filters button[data-f="'+f+'"]');if(b)b.click();document.querySelector('.tbl').scrollIntoView({behavior:"smooth"});}
 
-function matches(r){
-  switch(FILT){
-    case "pass":return r.result==="PASS"; case "fail":return r.result==="FAIL";
-    case "301":return r.redirect_type===301; case "302":return r.redirect_type===302;
-    case "404":return r.final_status===404||r.final_status===410;
-    case "chain":return r.is_chain; case "loop":return r.is_loop;
-    case "canon":return !r.canonical_ok; case "noindex":return r.final_status===200&&!r.indexable;
-    case "slow":return r.slow; case "https":return r.final_status===200&&!r.is_https;
-    default:return true;
-  }
-}
+function matches(r){switch(FILT){
+  case "pass":return r.result==="PASS";case "fail":return r.result==="FAIL";
+  case "301":return r.redirect_type===301;case "302":return r.redirect_type===302;
+  case "404":return r.final_status===404||r.final_status===410;
+  case "chain":return r.is_chain;case "loop":return r.is_loop;case "canon":return !r.canonical_ok;
+  case "noindex":return r.final_status===200&&!r.indexable;case "slow":return r.slow;
+  case "https":return r.final_status===200&&!r.is_https;default:return true;}}
 function statusCls(s){return s===200?"st-ok":(s>=300&&s<400?"st-warn":"st-bad");}
 function render(){
   const q=$("fSearch").value.toLowerCase().trim();
   let list=RES.filter(r=>matches(r)&&(!q||(r.source+" "+r.final_url).toLowerCase().includes(q)));
   $("rCount").textContent=list.length+" of "+RES.length;
+  if(!list.length){$("tb").innerHTML='<tr><td colspan="11"><div class="empty">No rows match.</div></td></tr>';return;}
   $("tb").innerHTML=list.map((r,i)=>{
-    const type=r.redirect_type==null?"—":(r.redirect_type===200?"—":r.redirect_type);
-    const typeCls=(r.redirect_type===301||r.redirect_type===308)?"st-ok":(r.redirect_type===302||r.redirect_type===307?"st-warn":"");
+    const tp=r.redirect_type;const typeCell=tp==null||tp==="—"||tp===200?'<span class="bnone">—</span>'
+      :'<span class="badge '+(tp===301||tp===308?"b301":"b302")+'">'+tp+'</span>';
     const chain=r.is_loop?'<span class="st-bad">loop</span>':(r.is_chain?'<span class="st-warn">'+r.hops+' hops</span>':(r.hops===1?'1':'0'));
     const canon=r.canonical_ok?'<span class="st-ok">✓</span>':'<span class="st-bad">≠</span>';
     const idx=r.final_status!==200?'—':(r.indexable?'<span class="st-ok">yes</span>':'<span class="st-bad">no</span>');
+    const viz=r.chain.map((h,k)=>'<span class="node"><span class="sc '+statusCls(h.status)+'">'+(h.status||'ERR')+'</span>'+esc(h.url)+'</span>'
+      +(k<r.chain.length-1?'<span class="arrow">→</span>':'')).join("");
     const detail='<tr class="detail" id="d'+i+'"><td colspan="11">'
-      +'<b style="font-size:12px">Redirect chain</b><div style="margin:6px 0">'
-      + (r.chain.length?r.chain.map(h=>'<div class="hop"><span class="code '+statusCls(h.status)+'">'+(h.status||'ERR')+'</span> '+esc(h.url)+(h.error?' <span class="st-bad">('+esc(h.error)+')</span>':'')+'</div>').join(""):'<div class="hop">no steps</div>')
-      +'</div>'
-      + (r.issues.length?'<b style="font-size:12px">Issues</b><div style="margin-top:6px">'+r.issues.map(x=>'<div class="issue"><span class="sev '+x.severity+'">'+x.severity+'</span>'+esc(x.msg)+'</div>').join("")+'</div>':'<div class="issue st-ok">No issues.</div>')
+      +'<b style="font-size:12px">Redirect path</b><div class="chainviz">'+(viz||'<span class="node">no steps</span>')+'</div>'
+      +(r.issues.length?'<b style="font-size:12px">Issues</b><div style="margin-top:6px">'+r.issues.map(x=>'<div class="issue"><span class="sev '+x.severity+'">'+x.severity+'</span>'+esc(x.msg)+'</div>').join("")+'</div>':'<div class="issue st-ok">No issues.</div>')
       +'</td></tr>';
-    return '<tr>'
+    return '<tr class="rrow">'
       +'<td><span class="caret" onclick="var d=document.getElementById(\'d'+i+'\');d.style.display=d.style.display===\'table-row\'?\'none\':\'table-row\'">▸</span></td>'
       +'<td class="u">'+esc(r.source)+'</td>'
       +'<td class="u">'+(r.expected?esc(r.expected):'<span style="color:var(--grey)">—</span>')+'</td>'
       +'<td class="u">'+esc(r.final_url)+'</td>'
-      +'<td class="rtype '+typeCls+'">'+type+'</td>'
-      +'<td>'+chain+'</td>'
+      +'<td>'+typeCell+'</td><td>'+chain+'</td>'
       +'<td class="'+statusCls(r.final_status)+'">'+(r.final_status||'ERR')+'</td>'
-      +'<td>'+canon+'</td>'
-      +'<td>'+idx+'</td>'
+      +'<td>'+canon+'</td><td>'+idx+'</td>'
       +'<td class="'+(r.slow?'st-warn':'')+'">'+r.speed_ms+'</td>'
-      +'<td><span class="pill '+(r.result==="PASS"?"p-pass":"p-fail")+'">'+r.result+'</span></td>'
-      +'</tr>'+detail;
-  }).join("")||'<tr><td colspan="11" style="color:var(--muted);padding:20px">No rows match.</td></tr>';
+      +'<td><span class="pill '+(r.result==="PASS"?"p-pass":"p-fail")+'">'+r.result+'</span></td></tr>'+detail;
+  }).join("");
 }
 document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));

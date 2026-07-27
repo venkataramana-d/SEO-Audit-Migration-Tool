@@ -406,9 +406,14 @@ def _validate_pairs(job, pairs):
     stop = job["stop_flag"]
     job.update(phase="validating", crawled=0, found=len(pairs))
     session = redirects.make_session()
-    results = [None] * len(pairs)
+    collected = []                      # streamed live to the UI as each completes
+    job["redirect_results"] = collected
+    job["redirect_summary"] = redirects.summarize(collected)
     done = 0
-    with ThreadPoolExecutor(max_workers=16) as ex:
+    # deliberately gentle concurrency — redirect checks do multiple GETs each and
+    # bot-protected sites (Cloudflare/WAF) throttle bursts, returning connection
+    # errors or slow challenge pages that look like false failures
+    with ThreadPoolExecutor(max_workers=5) as ex:
         futs = {ex.submit(redirects.validate, p["source"], p.get("expected", ""), session): i
                 for i, p in enumerate(pairs)}
         for f in as_completed(futs):
@@ -416,23 +421,25 @@ def _validate_pairs(job, pairs):
                 break
             i = futs[f]
             try:
-                results[i] = f.result()
+                r = f.result()
             except Exception as e:
-                results[i] = {"source": pairs[i]["source"], "expected": pairs[i].get("expected", ""),
-                              "final_url": pairs[i]["source"], "final_status": 0,
-                              "redirect_type": None, "hops": 0, "chain": [], "is_chain": False,
-                              "is_loop": False, "expected_match": None, "canonical": "",
-                              "canonical_ok": True, "indexable": True, "index_reason": "",
-                              "is_https": False, "www": {}, "trailing_slash": {}, "lost_params": [],
-                              "lost_utm": [], "speed_ms": 0, "slow": False,
-                              "issues": [{"severity": "Critical", "msg": "Validation error: " + str(e)[:120]}],
-                              "result": "FAIL"}
+                r = {"source": pairs[i]["source"], "expected": pairs[i].get("expected", ""),
+                     "final_url": pairs[i]["source"], "final_status": 0,
+                     "redirect_type": None, "hops": 0, "chain": [], "is_chain": False,
+                     "is_loop": False, "expected_match": None, "canonical": "",
+                     "canonical_ok": True, "indexable": True, "index_reason": "",
+                     "is_https": False, "www": {}, "trailing_slash": {}, "lost_params": [],
+                     "lost_utm": [], "speed_ms": 0, "slow": False,
+                     "issues": [{"severity": "Critical", "msg": "Validation error: " + str(e)[:120]}],
+                     "result": "FAIL"}
+            collected.append(r)
             done += 1
+            if done % 8 == 0 or done == len(pairs):
+                job["redirect_summary"] = redirects.summarize(collected)
             job.update(phase="validating", crawled=done, found=len(pairs),
                        current=pairs[i]["source"])
-    results = [r for r in results if r]
-    job["redirect_results"] = results
-    job["redirect_summary"] = redirects.summarize(results)
+    job["redirect_results"] = collected
+    job["redirect_summary"] = redirects.summarize(collected)
     job["phase"] = "complete"
     job["done"] = True
 

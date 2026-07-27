@@ -95,10 +95,18 @@ def validate(source, expected="", session=None):
             loop = True
             break
         visited.add(key)
-        try:
-            r = session.get(url, allow_redirects=False, timeout=TIMEOUT)
-        except requests.RequestException as e:
-            chain.append({"url": url, "status": 0, "error": str(e)[:120]})
+        # retry on transient connection errors/timeouts (slow servers drop
+        # connections under load) before treating the URL as unreachable
+        r, last_err = None, None
+        for attempt in range(3):
+            try:
+                r = session.get(url, allow_redirects=False, timeout=TIMEOUT)
+                break
+            except requests.RequestException as e:
+                last_err = e
+                time.sleep(0.4 * (attempt + 1))
+        if r is None:
+            chain.append({"url": url, "status": 0, "error": str(last_err)[:120]})
             break
         chain.append({"url": url, "status": r.status_code})
         loc = r.headers.get("Location")
@@ -161,7 +169,8 @@ def validate(source, expected="", session=None):
         add("Medium", "UTM parameters lost through redirect: " + ", ".join(lost_utm))
     elif lost_params:
         add("Low", "Query parameters lost: " + ", ".join(lost_params))
-    if total_ms > SLOW_MS:
+    slow = hop_count > 0 and total_ms > SLOW_MS   # "slow redirect" only applies when it redirects
+    if slow:
         add("Low", f"Slow redirect ({total_ms} ms)")
 
     # PASS/FAIL — hard failures only
@@ -190,7 +199,7 @@ def validate(source, expected="", session=None):
         "lost_params": lost_params,
         "lost_utm": lost_utm,
         "speed_ms": total_ms,
-        "slow": total_ms > SLOW_MS,
+        "slow": slow,
         "issues": issues,
         "result": result,
     }
