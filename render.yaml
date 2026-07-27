@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: seo-audit-tool
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # ONE worker + threads so the in-memory job store and background crawl
+    # threads are shared across requests (multiple workers would break them).
+    startCommand: gunicorn app:app --workers 1 --threads 8 --timeout 120 --bind 0.0.0.0:$PORT
