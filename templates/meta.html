@@ -39,6 +39,10 @@
   .phase{font-size:13px;color:var(--muted);margin-bottom:6px}
   .bar{height:8px;background:var(--card2);border-radius:8px;overflow:hidden;margin-bottom:14px}
   .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--green));transition:width .3s}
+  .summ{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+  .summ .b{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:14px;text-align:center}
+  .summ .b b{display:block;font-size:23px}.summ .b small{color:var(--muted);font-size:11px}
+  .summ .b.course b{color:var(--brand)} .summ .b.blog b{color:var(--green)} .summ .b.issue b{color:var(--red)}
   .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
   .filters input[type=text]{flex:1;min-width:160px}
   .filters button{font-size:12.5px;padding:8px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
@@ -95,6 +99,15 @@
       <input type="file" id="csv_file" accept=".csv,.txt"><div class="hint" id="csv_info">One URL per row. Parsed in your browser.</div></div></div>
     <div class="row in-src" id="in_paste" style="display:none"><div class="full"><label>Paste URLs (one per line)</label>
       <textarea id="paste_urls" rows="6" placeholder="https://www.invensislearning.com/blog/..."></textarea></div></div>
+    <div class="row"><div class="full">
+      <label>GSC data (optional — upload CSV, no login needed)</label>
+      <label style="font-size:12px;color:var(--muted)">Pages CSV — last 3 months</label>
+      <input type="file" id="gsc_csv" accept=".csv">
+      <div class="hint" id="gsc_csv_info">Search Console → Performance → Pages → Export → save the Pages sheet as CSV.</div>
+      <label style="font-size:12px;color:var(--muted);margin-top:8px">Pages CSV — last 12 months (optional)</label>
+      <input type="file" id="gsc_csv_12" accept=".csv">
+      <div class="hint" id="gsc_csv_12_info"></div>
+    </div></div>
     <div class="row">
       <div><label>Max URLs (up to 15000)</label><input type="number" id="max_pages" value="200" min="1" max="15000"></div>
       <div><label>&nbsp;</label><button class="btn" id="runBtn">Run Meta Audit</button></div>
@@ -106,6 +119,7 @@
     <div class="phase" id="phaseTxt">Starting…</div>
     <div class="bar"><i id="barFill"></i></div>
     <div id="results" style="display:none">
+      <div class="summ" id="metaSumm"></div>
       <div class="filters">
         <input type="text" id="fSearch" placeholder="Search name or URL…">
         <button data-f="all" class="on">All</button>
@@ -114,11 +128,21 @@
         <button data-f="title">Title issues</button>
         <button data-f="desc">Desc issues</button>
         <button data-f="canon">Canonical issues</button>
+        <button data-f="top" id="fTopBtn" style="display:none">Top (GSC)</button>
+        <select id="fGscPeriod" style="display:none;font-size:12.5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line)">
+          <option value="90">GSC: 3 months</option>
+          <option value="365">GSC: 12 months</option>
+        </select>
+        <select id="fSort" style="font-size:12.5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line)">
+          <option value="type">Sort: type</option>
+          <option value="clicks">Sort: GSC clicks</option>
+          <option value="issues">Sort: issues</option>
+        </select>
         <span class="rcount" id="rCount"></span>
       </div>
       <div style="overflow-x:auto">
       <table class="tbl">
-        <thead><tr><th>#</th><th>Type</th><th>Name (title) &amp; URL</th><th>Title</th><th>Desc</th><th>Canonical</th><th>Issues</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Type</th><th>Name (title) &amp; URL</th><th>Title</th><th>Desc</th><th>Canonical</th><th id="thGsc" style="display:none">GSC clicks</th><th>Issues</th><th></th></tr></thead>
         <tbody id="tb"></tbody>
       </table>
       </div>
@@ -129,6 +153,47 @@
 <script>
 const $=id=>document.getElementById(id);
 let jobId=null, poll=null, PAGES=[], ISSUES={};
+let GSC={}, GSC_90={}, GSC_365={};
+function gscKey(u){return (u||"").replace(/\/$/,"");}
+function gscOf(p){return GSC[gscKey(p.url)]||null;}
+function nfmt(n){return (n||0).toLocaleString();}
+
+// ---- GSC CSV export parsing (no API/login) ----
+let gscRows=[], gscRows12=[];
+function csvToRows(text){
+  const rows=[]; let row=[], field="", q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else q=false; } else field+=c; }
+    else if(c==='"') q=true;
+    else if(c===",") { row.push(field); field=""; }
+    else if(c==="\n"){ row.push(field); rows.push(row); row=[]; field=""; }
+    else if(c!=="\r") field+=c;}
+  if(field.length||row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+function parseGsc(text){
+  const rows=csvToRows(text); if(!rows.length) return [];
+  const h=rows[0].map(x=>x.toLowerCase().trim());
+  const find=(...k)=>h.findIndex(x=>k.some(w=>x.includes(w)));
+  const iU=find("page","url","landing","address"), iC=find("click"), iI=find("impress"), iR=find("ctr"), iP=find("position");
+  const num=s=>parseFloat(String(s||"").replace(/[,%\s]/g,""))||0;
+  const out=[];
+  for(let i=1;i<rows.length;i++){const r=rows[i]; if(!r)continue;
+    let u=((iU>=0?r[iU]:r[0])||"").trim();
+    if(!/https?:\/\//.test(u)) continue;
+    out.push([u,num(r[iC]),num(r[iI]),num(r[iR]),num(r[iP])]);}
+  return out;
+}
+function hookGsc(inputId,infoId,store){
+  $(inputId).addEventListener("change",e=>{const f=e.target.files[0]; if(!f)return;
+    const rd=new FileReader();
+    rd.onload=()=>{const rows=parseGsc(rd.result); store(rows);
+      $(infoId).textContent=rows.length? rows.length+" pages loaded from "+f.name
+        : "No URL rows found — use the GSC Pages export.";};
+    rd.readAsText(f);});
+}
+hookGsc("gsc_csv","gsc_csv_info",r=>gscRows=r);
+hookGsc("gsc_csv_12","gsc_csv_12_info",r=>gscRows12=r);
 
 // input mode switching + csv parsing
 let csvUrls=[];
@@ -151,6 +216,8 @@ $("runBtn").onclick=async()=>{
   else if(mode==="sitemap")body.sitemap_url=$("sitemap_url").value;
   else if(mode==="csv"){if(!csvUrls.length){$("cfgErr").textContent="Upload a file with URLs first.";$("cfgErr").style.display="block";return;}body.url_list=csvUrls;}
   else if(mode==="paste")body.url_list=extractUrls($("paste_urls").value);
+  if(gscRows.length){ body.gsc_upload=gscRows; }
+  if(gscRows12.length){ body.gsc_upload_12=gscRows12; }
   const r=await fetch("/api/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const j=await r.json();
   if(j.error){$("cfgErr").textContent=j.error;$("cfgErr").style.display="block";return;}
@@ -174,6 +241,13 @@ async function load(){
   const d=await r.json();
   if(!d.pages||!d.pages.length){ return; }
   PAGES=d.pages||[];ISSUES=d.issues_by_url||{};
+  GSC_90=d.gsc_map_90||{}; GSC_365=d.gsc_map_365||{};
+  GSC = ($("fGscPeriod").value==="365") ? GSC_365 : GSC_90;
+  const hasGsc = Object.keys(GSC_90).length>0 || Object.keys(GSC_365).length>0;
+  $("fGscPeriod").style.display = hasGsc ? "" : "none";
+  $("fTopBtn").style.display = hasGsc ? "" : "none";
+  $("thGsc").style.display = hasGsc ? "" : "none";
+  $("fSort").querySelector('option[value=clicks]').style.display = hasGsc ? "" : "none";
   sessionStorage.setItem("lastMetaJob", jobId);   // remember for back navigation
   $("panel").style.display="block";
   $("phaseTxt").textContent="Complete ✓";
@@ -198,16 +272,39 @@ async function load(){
 })();
 
 function render(){
+  const hasGsc=Object.keys(GSC).length>0;
+  // ---- default summary: total live courses & blogs ----
+  let nCourse=0,nBlog=0,nPage=0,nIssues=0;
+  PAGES.forEach(p=>{const t=typeOf(p.url);
+    if(t==="course")nCourse++; else if(t==="blog")nBlog++; else nPage++;
+    if(p.issue_count)nIssues++;});
+  let sm='<div class="b course"><b>'+nfmt(nCourse)+'</b><small>Live courses</small></div>'
+    +'<div class="b blog"><b>'+nfmt(nBlog)+'</b><small>Live blogs</small></div>'
+    +'<div class="b"><b>'+nfmt(nPage)+'</b><small>Other pages</small></div>'
+    +'<div class="b"><b>'+nfmt(PAGES.length)+'</b><small>Total audited</small></div>'
+    +'<div class="b issue"><b>'+nfmt(nIssues)+'</b><small>With issues</small></div>';
+  if(hasGsc){ const wt=PAGES.filter(p=>gscOf(p)).length;
+    sm+='<div class="b"><b>'+nfmt(wt)+'</b><small>With GSC traffic</small></div>'; }
+  $("metaSumm").innerHTML=sm;
+
   const q=$("fSearch").value.toLowerCase().trim();
+  const sort=$("fSort").value;
   let list=PAGES.filter(p=>{
     const t=typeOf(p.url);
     if(FILT==="course"&&t!=="course")return false;
     if(FILT==="blog"&&t!=="blog")return false;
+    if(FILT==="top"&&!gscOf(p))return false;
     if(FILT==="title"&&!(p.title_len<30||p.title_len>60||!p.title_len))return false;
     if(FILT==="desc"&&!(p.meta_desc_len<70||p.meta_desc_len>160||!p.meta_desc_len))return false;
     if(FILT==="canon"&&p.canonical_status==="ok")return false;
     if(q&&!((p.url||"").toLowerCase().includes(q)||(p.title||"").toLowerCase().includes(q)))return false;
     return true;
+  });
+  const ord={course:0,blog:1,page:2};
+  list.sort((a,b)=>{
+    if(sort==="clicks")return ((gscOf(b)||{}).clicks||0)-((gscOf(a)||{}).clicks||0);
+    if(sort==="issues")return (b.issue_count||0)-(a.issue_count||0);
+    return ord[typeOf(a.url)]-ord[typeOf(b.url)];
   });
   $("rCount").textContent=list.length+" of "+PAGES.length+" URLs";
   $("tb").innerHTML=list.map((p,i)=>{
@@ -218,6 +315,10 @@ function render(){
     const canonTxt=cs==="ok"?"✓ match":(cs==="mismatch"?"≠ differs":"✗ missing");
     let path=p.url;try{const u=new URL(p.url);path=u.pathname;}catch(e){}
     const href="/page?job="+encodeURIComponent(jobId)+"&url="+encodeURIComponent(p.url);
+    const g=gscOf(p);
+    const gscCell = hasGsc
+      ? '<td>'+(g?('<b>'+nfmt(g.clicks)+'</b> <span style="color:var(--muted);font-size:11px">#'+g.rank+'</span>'):'<span style="color:var(--grey)">—</span>')+'</td>'
+      : '';
     return '<tr>'
       +'<td>'+(i+1)+'</td>'
       +'<td><span class="type '+t+'">'+t+'</span></td>'
@@ -225,9 +326,10 @@ function render(){
       +'<td><span class="'+tcls+'">'+p.title_len+'</span> ch</td>'
       +'<td><span class="'+dcls+'">'+p.meta_desc_len+'</span> ch</td>'
       +'<td class="canon '+cs+'">'+canonTxt+'</td>'
+      + gscCell
       +'<td class="iss'+(p.issue_count?'':' zero')+'">'+p.issue_count+'</td>'
       +'<td><a class="rowlink" href="'+href+'">view →</a></td></tr>';
-  }).join("")||'<tr><td colspan="8" style="color:var(--muted);padding:20px">No URLs match.</td></tr>';
+  }).join("")||'<tr><td colspan="9" style="color:var(--muted);padding:20px">No URLs match.</td></tr>';
 }
 function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 let FILT="all";
@@ -235,6 +337,8 @@ document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('clic
   document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');FILT=b.getAttribute('data-f');render();}));
 $("fSearch").addEventListener('input',render);
+$("fGscPeriod").addEventListener('change',()=>{GSC=$("fGscPeriod").value==="365"?GSC_365:GSC_90;render();});
+$("fSort").addEventListener('change',render);
 </script>
 </body>
 </html>
