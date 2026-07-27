@@ -19,6 +19,11 @@
   .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px;transition:.12s}
   .navlink:hover{color:var(--ink);background:var(--card2)}
   .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  .subtabs{display:flex;gap:8px;margin:0 0 20px;flex-wrap:wrap}
+  .subtab{font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:10px;text-decoration:none;
+    color:var(--muted);background:var(--card2);border:1px solid var(--line)}
+  .subtab:hover{color:var(--ink)}
+  .subtab.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));border-color:transparent}
   header h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
   header p{color:var(--muted);margin:0 0 24px;font-size:14px}
   .badge{display:inline-block;background:var(--card2);color:var(--brand);
@@ -143,7 +148,6 @@
     <span class="brand">SEO Migration Toolkit</span>
     <a class="navlink active" href="/">Site Audit</a>
     <a class="navlink" href="/meta">Meta &amp; Canonical</a>
-    <a class="navlink" href="/redirects">Redirects</a>
     <a class="navlink" href="/checklist">Migration Checklist</a>
     <a class="navlink" href="/settings">Settings</a>
   </nav>
@@ -152,6 +156,11 @@
     <h1>SEO Pre-Migration Audit <span class="badge">invensislearning.com</span></h1>
     <p>Crawl the current site, audit every page, and export a color-coded report to protect rankings through migration.</p>
   </header>
+
+  <div class="subtabs">
+    <a class="subtab active" href="/">Crawl &amp; Audit</a>
+    <a class="subtab" href="/redirects">Redirect Validation</a>
+  </div>
 
   <div class="card" id="config">
     <h2>Configuration</h2>
