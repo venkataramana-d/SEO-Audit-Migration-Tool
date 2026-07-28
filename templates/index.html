@@ -4,18 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SEO Pre-Migration Audit Tool</title>
+<link rel="stylesheet" href="/static/app.css">
 <style>
-  :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
-    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
-    --shadow:0 8px 28px rgba(30,45,90,.07);
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
-    color:var(--ink);min-height:100vh}
-  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 60px}
+  /* page-specific styles — palette, chrome & components come from app.css */
+  .wrap{max-width:1120px;margin:0 auto;padding:22px 22px 70px}
   .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .topnav .brand{font-weight:800;font-size:14px;letter-spacing:-.01em;margin-right:14px;color:var(--ink)}
   .navlink{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:9px;transition:.12s}
@@ -163,18 +155,23 @@
 </head>
 <body>
 <div class="wrap">
-  <nav class="topnav">
-    <span class="brand">SEO Migration Toolkit</span>
-    <a class="navlink active" href="/">Site Audit</a>
-    <a class="navlink" href="/meta">Meta &amp; Canonical</a>
-    <a class="navlink" href="/checklist">Migration Checklist</a>
-    <a class="navlink" href="/settings">Settings</a>
-  </nav>
+  <div class="top">
+    <div class="logo"><span class="mark">iL</span> SEO Migration Toolkit</div>
+    <nav class="nav">
+      <a class="on" href="/">Site Audit</a>
+      <a href="/meta">Meta &amp; Canonical</a>
+      <a href="/checklist">Checklist</a>
+      <a href="/settings">Settings</a>
+    </nav>
+    <div class="right">
+      <span class="prop"><span class="live"></span> <b>invensislearning.com</b></span>
+      <button class="tgl" id="themeTgl" title="Toggle light / dark">◐</button>
+    </div>
+  </div>
 
-  <header>
-    <h1>SEO Pre-Migration Audit <span class="badge">invensislearning.com</span></h1>
-    <p>Crawl the current site, audit every page, and export a color-coded report to protect rankings through migration.</p>
-  </header>
+  <div class="eyebrow">Pre-migration audit</div>
+  <h1>Site health overview</h1>
+  <p class="sub">Crawl the live site, audit every page, and protect rankings through migration.</p>
 
   <div class="subtabs">
     <a class="subtab active" href="/">Crawl &amp; Audit</a>
@@ -668,6 +665,15 @@ $("fGscPeriod").addEventListener("change", ()=>{
     $("stopBtn").style.display = "inline-block";
     poll = setInterval(tick, 800);
   }
+})();
+
+// theme toggle (persisted)
+(function(){
+  const r=document.documentElement, K="tk-theme", saved=localStorage.getItem(K);
+  if(saved) r.setAttribute("data-theme",saved);
+  const b=document.getElementById("themeTgl");
+  if(b) b.onclick=()=>{const cur=r.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+    const nxt=cur==="dark"?"light":"dark";r.setAttribute("data-theme",nxt);localStorage.setItem(K,nxt);};
 })();
 </script>
 </body>

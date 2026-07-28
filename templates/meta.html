@@ -4,17 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Meta &amp; Canonical Audit — SEO Migration Toolkit</title>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/app.js" defer></script>
 <style>
-  :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
-    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
-    --shadow:0 8px 28px rgba(30,45,90,.07);
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
-    color:var(--ink);min-height:100vh;line-height:1.5}
+  /* page-specific styles — palette, chrome & components come from app.css */
   .wrap{max-width:1120px;margin:0 auto;padding:26px 20px 80px}
   .topnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
@@ -75,13 +68,19 @@
 </head>
 <body>
 <div class="wrap">
-  <nav class="topnav">
-    <span class="brand">SEO Migration Toolkit</span>
-    <a class="navlink" href="/">Site Audit</a>
-    <a class="navlink active" href="/meta">Meta &amp; Canonical</a>
-    <a class="navlink" href="/checklist">Checklist</a>
-    <a class="navlink" href="/settings">Settings</a>
-  </nav>
+  <div class="top">
+    <div class="logo"><span class="mark">iL</span> SEO Migration Toolkit</div>
+    <nav class="nav">
+      <a href="/">Site Audit</a>
+      <a class="on" href="/meta">Meta &amp; Canonical</a>
+      <a href="/checklist">Checklist</a>
+      <a href="/settings">Settings</a>
+    </nav>
+    <div class="right">
+      <span class="prop"><span class="live"></span> <b>invensislearning.com</b></span>
+      <button class="tgl" id="themeTgl" title="Toggle light / dark">◐</button>
+    </div>
+  </div>
 
   <h1>Meta &amp; Canonical Audit</h1>
   <p class="lede">Focused audit of page names (titles), meta descriptions, character limits and canonical tags — for courses, blogs and any URL list. Feed it a crawl, a sitemap, a CSV, or a pasted list.</p>

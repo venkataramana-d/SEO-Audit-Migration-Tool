@@ -53,13 +53,19 @@
 </head>
 <body>
 <div class="wrap">
-  <nav class="topnav">
-    <span class="brand">SEO Migration Toolkit</span>
-    <a class="navlink" href="/">Site Audit</a>
-    <a class="navlink" href="/meta">Meta &amp; Canonical</a>
-    <a class="navlink" href="/checklist">Checklist</a>
-    <a class="navlink" href="/settings">Settings</a>
-  </nav>
+  <div class="top">
+    <div class="logo"><span class="mark">iL</span> SEO Migration Toolkit</div>
+    <nav class="nav">
+      <a href="/">Site Audit</a>
+      <a href="/meta">Meta &amp; Canonical</a>
+      <a href="/checklist">Checklist</a>
+      <a href="/settings">Settings</a>
+    </nav>
+    <div class="right">
+      <span class="prop"><span class="live"></span> <b>invensislearning.com</b></span>
+      <button class="tgl" id="themeTgl" title="Toggle light / dark">◐</button>
+    </div>
+  </div>
 
 {% if not_found %}
   <a class="back" href="/">← Back to Site Audit</a>
