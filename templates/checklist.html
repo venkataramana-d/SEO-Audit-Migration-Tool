@@ -6,13 +6,15 @@
 <title>Migration Checklist — SEO Migration Toolkit</title>
 <style>
   :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
-    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
+    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
+    --shadow:0 8px 28px rgba(30,45,90,.07);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.6}
+    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
+    color:var(--ink);min-height:100vh;line-height:1.6}
   .wrap{max-width:860px;margin:0 auto;padding:32px 20px 90px}
   .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
@@ -48,8 +50,9 @@
   .phase-when,.phase-intro{display:none}
   .phase-head{margin-bottom:12px}
 
-  .item{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px 17px;margin-bottom:9px;transition:.12s}
-  .item.done{background:var(--card2);opacity:.72}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-bottom:10px;transition:.14s;box-shadow:0 2px 8px rgba(30,45,90,.04)}
+  .item:hover{box-shadow:0 6px 18px rgba(30,45,90,.08)}
+  .item.done{background:var(--card2);opacity:.72;box-shadow:none}
   .item-top{display:flex;gap:12px;align-items:flex-start}
   .chk{flex:none;width:21px;height:21px;margin-top:1px;border:1.5px solid var(--grey);border-radius:6px;
     cursor:pointer;background:transparent;position:relative;transition:.12s}

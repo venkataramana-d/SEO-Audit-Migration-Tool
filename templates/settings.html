@@ -6,13 +6,15 @@
 <title>Settings — SEO Migration Toolkit</title>
 <style>
   :root{
-    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#1a2035;
-    --muted:#5a647e; --line:#dce1ec; --brand:#3a6bff; --brand2:#2a56e0;
-    --green:#1f9d6b; --red:#d64550; --amber:#c77700; --grey:#7a8299;
+    --bg:#f4f6fb; --card:#ffffff; --card2:#eef1f8; --ink:#141a2e;
+    --muted:#5a647e; --line:#e0e5ef; --brand:#3a6bff; --brand2:#2a56e0;
+    --green:#12a06a; --red:#e0475a; --amber:#d98a00; --grey:#8a93ab;
+    --shadow:0 8px 28px rgba(30,45,90,.07);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:linear-gradient(160deg,#f4f6fb,#eaeef7);color:var(--ink);min-height:100vh;line-height:1.6}
+    background:radial-gradient(1200px 500px at 80% -10%,#eaf0ff,transparent),linear-gradient(160deg,#f6f8fc,#eef1f8);
+    color:var(--ink);min-height:100vh;line-height:1.6}
   .wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px}
   .topnav{display:flex;align-items:center;gap:8px;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--line)}
   .topnav .brand{font-weight:800;font-size:14px;margin-right:14px}
@@ -21,7 +23,7 @@
   .navlink.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
   h1{font-size:25px;margin:0 0 6px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 26px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:18px;box-shadow:0 6px 20px rgba(30,50,90,.05)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:18px;box-shadow:var(--shadow)}
   .card h2{font-size:14px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
   .status{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-top:6px}
   .status.ok{color:var(--green)} .status.no{color:var(--red)}
@@ -30,12 +32,14 @@
   .props{margin:10px 0 0;font-size:13px;color:var(--muted)}
   label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin:14px 0 6px}
   input[type=text]{width:100%;background:#fff;border:1px solid var(--line);color:var(--ink);
-    border-radius:10px;padding:11px 13px;font-size:14px;outline:none}
-  input:focus{border-color:var(--brand)}
+    border-radius:10px;padding:11px 13px;font-size:14px;outline:none;transition:.12s}
+  input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(58,107,255,.12)}
   .hint{font-size:12px;color:var(--grey);margin-top:6px}
   .hint a{color:var(--brand)}
   .btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;
-    border-radius:10px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px}
+    border-radius:10px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;
+    box-shadow:0 6px 16px rgba(58,107,255,.28);transition:.14s}
+  .btn:hover{transform:translateY(-1px)}
   .saved{background:rgba(31,157,107,.12);border:1px solid var(--green);color:var(--green);
     padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:18px}
   ol{font-size:13px;color:var(--muted);padding-left:20px;margin:8px 0 0}
