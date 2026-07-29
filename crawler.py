@@ -298,15 +298,24 @@ class Crawler:
             return True
 
     def _fetch(self, url):
-        try:
-            resp = self.session.get(url, timeout=TIMEOUT, allow_redirects=True)
-            ctype = resp.headers.get("Content-Type", "")
-            if "html" not in ctype.lower():
-                return {"url": url, "final_url": str(resp.url), "status": resp.status_code,
-                        "content_type": ctype, "non_html": True}
-            return extract_page(url, resp)
-        except requests.RequestException as e:
-            return {"url": url, "status": 0, "error": str(e)[:200]}
+        # Retry on transient connection errors/timeouts. Under high concurrency a
+        # Cloudflare/WAF-protected host drops a fraction of connections; a gentle
+        # backoff recovers them instead of falsely reporting the live page as
+        # unreachable (status 0). Matches the retry policy in redirects.py.
+        last_err = None
+        for attempt in range(3):
+            try:
+                resp = self.session.get(url, timeout=TIMEOUT, allow_redirects=True)
+                ctype = resp.headers.get("Content-Type", "")
+                if "html" not in ctype.lower():
+                    return {"url": url, "final_url": str(resp.url), "status": resp.status_code,
+                            "content_type": ctype, "non_html": True}
+                return extract_page(url, resp)
+            except requests.RequestException as e:
+                last_err = e
+                if attempt < 2:
+                    time.sleep(0.5 * (attempt + 1))
+        return {"url": url, "status": 0, "error": str(last_err)[:200]}
 
     def _fetch_sitemap(self, sm_url):
         """Fetch one sitemap; return (child_sitemap_urls, page_urls)."""
