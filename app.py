@@ -250,8 +250,8 @@ def page_links():
     for l in page.get("links", []):
         st = l.get("status")
         issue = None
-        # confirmed-broken only — status 0 = throttled/unfetched, not dead
-        if st is not None and (st == 404 or st == 410 or st >= 500):
+        # broken = definitively gone only (404/410); 0/429/5xx are transient/throttle
+        if st in (404, 410):
             issue = "broken"
         elif l["internal"] and l["nofollow"]:
             issue = "internal-nofollow"

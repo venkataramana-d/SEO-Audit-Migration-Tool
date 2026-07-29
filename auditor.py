@@ -407,11 +407,12 @@ def audit_page(page, status_map, all_titles, all_descs, all_canonicals):
     broken = []
     for link in page.get("internal_links", []):
         st = status_map.get(link)
-        # Only flag CONFIRMED broken targets (404/410/5xx). status 0 means the
-        # crawler couldn't fetch it (throttling/timeout under load), NOT that the
-        # page is dead — counting those produced sitewide false positives for
-        # nav/footer links to live pages that happened to get throttled.
-        if st is not None and (st == 404 or st == 410 or st >= 500):
+        # A broken link means the target is definitively gone: 404 (Not Found) or
+        # 410 (Gone). Everything else — status 0 (couldn't fetch), 429, and 5xx
+        # (502/503/504 gateway/throttle) — is a transient/unverifiable condition we
+        # already retry during the crawl; counting those flagged nav/footer links to
+        # live-but-throttled pages as broken on ~every page (sitewide false positives).
+        if st in (404, 410):
             broken.append(f"{link} ({st})")
     if broken:
         sample = "; ".join(broken[:5]) + (" ..." if len(broken) > 5 else "")
@@ -449,8 +450,8 @@ def audit_all(pages):
         for lk in p.get("links", []):
             st = status_map.get(lk["href"])
             lk["status"] = st
-            # confirmed-broken only (see note above) — exclude status 0 (throttled)
-            if st is not None and (st == 404 or st == 410 or st >= 500):
+            # broken = definitively gone only (404/410); see note in audit_page
+            if st in (404, 410):
                 broken_links += 1
         p["broken_links"] = broken_links
 
