@@ -21,6 +21,8 @@ import lxml.html
 USER_AGENT = "Mozilla/5.0 (compatible; SEO-Audit-Tool/1.0; pre-migration audit)"
 HEADERS = {"User-Agent": USER_AGENT}
 TIMEOUT = 12          # fail slow pages faster instead of blocking a worker for 20s
+_MAX_TRIES = 4        # attempts per URL before giving up (transient throttle/gateway errors)
+_TRANSIENT_STATUS = {429, 502, 503, 504}   # server-side throttle / gateway errors — retryable
 
 
 def normalize(url):
@@ -298,24 +300,35 @@ class Crawler:
             return True
 
     def _fetch(self, url):
-        # Retry on transient connection errors/timeouts. Under high concurrency a
-        # Cloudflare/WAF-protected host drops a fraction of connections; a gentle
-        # backoff recovers them instead of falsely reporting the live page as
-        # unreachable (status 0). Matches the retry policy in redirects.py.
-        last_err = None
-        for attempt in range(3):
+        # Retry transient failures before declaring a page dead. Under sustained
+        # load a Cloudflare/WAF-protected origin BOTH drops connections (recorded
+        # as status 0) AND returns gateway/throttle statuses (429/502/503/504) on
+        # pages that are actually live. Neither is a real page problem, so we back
+        # off (honouring Retry-After) and retry — otherwise ~a quarter to a half of
+        # a large crawl gets falsely reported as broken.
+        last = None
+        for attempt in range(_MAX_TRIES):
             try:
                 resp = self.session.get(url, timeout=TIMEOUT, allow_redirects=True)
+                if resp.status_code in _TRANSIENT_STATUS and attempt < _MAX_TRIES - 1:
+                    ra = resp.headers.get("Retry-After")
+                    try:
+                        wait = float(ra) if ra else 0
+                    except ValueError:
+                        wait = 0
+                    time.sleep(min(max(wait, 0.6 * (attempt + 1)), 5.0))
+                    last = {"url": url, "status": resp.status_code}
+                    continue
                 ctype = resp.headers.get("Content-Type", "")
                 if "html" not in ctype.lower():
                     return {"url": url, "final_url": str(resp.url), "status": resp.status_code,
                             "content_type": ctype, "non_html": True}
                 return extract_page(url, resp)
             except requests.RequestException as e:
-                last_err = e
-                if attempt < 2:
+                last = {"url": url, "status": 0, "error": str(e)[:200]}
+                if attempt < _MAX_TRIES - 1:
                     time.sleep(0.5 * (attempt + 1))
-        return {"url": url, "status": 0, "error": str(last_err)[:200]}
+        return last or {"url": url, "status": 0, "error": "unreachable"}
 
     def _fetch_sitemap(self, sm_url):
         """Fetch one sitemap; return (child_sitemap_urls, page_urls)."""

@@ -227,8 +227,8 @@ https://www.invensislearning.com/pmp-certification-training/"></textarea>
       </div>
       <div>
         <label>Concurrent workers</label>
-        <input type="number" id="workers" value="8" min="1" max="32">
-        <div class="hint">Higher = faster crawl, but too many parallel requests trip the site's rate-limiter and pages fail. 8 is a safe balance; drop to 4–5 if you see failed pages.</div>
+        <input type="number" id="workers" value="5" min="1" max="32">
+        <div class="hint">Higher = faster crawl, but too many parallel requests trip the site's rate-limiter (pages come back as 502 / failed). 5 is a safe, Googlebot-gentle default for large runs; raise it only for small crawls.</div>
       </div>
     </div>
     <!-- GSC option hidden for now (code kept for later) -->
